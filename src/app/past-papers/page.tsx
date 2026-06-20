@@ -385,7 +385,7 @@ export default function PastPapersPage() {
             })
             .map(([year, yearPapers]) => (
                 <div key={year} className="space-y-1.5">
-                    <h3 className="text-[20px] ml-4  text-zinc-900 dark:text-zinc-100 ml-1 mt-6 mb-2">
+                    <h3 className="text-[20px] ml-4 font-bold text-zinc-900 dark:text-zinc-100 ml-1 mt-6 mb-2">
                         {year}
                     </h3>
                     <div className="space-y-1.5">
@@ -598,9 +598,9 @@ const PaperCard: React.FC<PaperCardProps> = ({ paper, onAction }) => {
                 : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/60 shadow-xl shadow-zinc-900/5 hover:border-zinc-350 dark:hover:border-zinc-700'
         }`}>
             <div className="flex items-center min-w-0">
-                <div className="text-[16px] font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                <div className="text-[16px] text-zinc-900 dark:text-zinc-100 truncate">
                     <span style={{ color: paper.isDisabled ? '#71717a' : subjColor }} className="font-bold mr-1.5">{paper.subject}</span>
-                    <span className="font-bold text-zinc-850 dark:text-zinc-250 mr-1.5">{paperPartDisplay}</span>
+                    <span className=" text-zinc-850 dark:text-zinc-250 mr-1.5">{paperPartDisplay}</span>
                     <span className="text-zinc-400 dark:text-zinc-500">{seriesDisplay}{yearDisplay}</span>
                     {paper.isComingSoon && <span className="text-[10px] text-zinc-400 uppercase ml-2">(Coming Soon)</span>}
                     {paper.isDisabled && <span className="text-[10px] text-red-500/70 dark:text-red-455/70 font-semibold uppercase ml-2">(Disabled)</span>}
