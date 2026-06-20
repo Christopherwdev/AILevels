@@ -24,6 +24,7 @@ export default function CalendarPage() {
   const [activePaintColor, setActivePaintColor] = useState<'green' | 'red' | 'blue' | 'purple' | 'none'>('none');
   const [todoList, setTodoList] = useState<{ id: string; text: string; completed: boolean }[]>([]);
   const [newTodoText, setNewTodoText] = useState('');
+  const [currentVisibleMonth, setCurrentVisibleMonth] = useState<string>('');
 
   // Helper to generate calendar days between two dates
   function getCalendarDays(start: string, end: string) {
@@ -135,6 +136,37 @@ export default function CalendarPage() {
     }
   }, [loading]);
 
+  // Track visible month in viewport to update dropdown selector value dynamically
+  useEffect(() => {
+    if (loading) return;
+
+    const container = document.getElementById('calendar-months-container');
+    if (!container) return;
+
+    const observerOptions = {
+      root: container,
+      rootMargin: '-50px 0px -50px 0px',
+      threshold: 0.1,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const monthKey = entry.target.id.replace('month-', '');
+          setCurrentVisibleMonth(monthKey);
+        }
+      });
+    }, observerOptions);
+
+    const monthElements = container.querySelectorAll('[id^="month-"]');
+    monthElements.forEach((el) => observer.observe(el));
+
+    return () => {
+      monthElements.forEach((el) => observer.unobserve(el));
+      observer.disconnect();
+    };
+  }, [loading]);
+
   // Todo functions
   const addTodo = () => {
     if (!newTodoText.trim()) return;
@@ -182,8 +214,8 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="flex-1 w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-0 flex flex-col p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl w-full mx-auto space-y-6 flex-1 flex flex-col">
+    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-955 text-zinc-900 dark:text-zinc-100 flex flex-col p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col min-h-0">
         {/* Top title text removed */}
 
         {loading ? (
@@ -191,9 +223,9 @@ export default function CalendarPage() {
             Loading Calendar...
           </div>
         ) : (
-          <div className="flex-1 flex flex-col lg:flex-row gap-6 items-start relative w-full">
+          <div className="flex-1 flex flex-col lg:flex-row gap-6 items-stretch relative w-full min-h-0">
             {/* Left Side: Calendar Month Lists */}
-            <div id="calendar-months-container" className="flex-1 space-y-8 overflow-y-auto pr-1 max-h-[calc(100vh-14rem)] no-scrollbar scroll-smooth w-full">
+            <div id="calendar-months-container" className="flex-1 space-y-8 overflow-y-auto pr-1 h-full no-scrollbar scroll-smooth w-full">
               {days.length === 0 ? (
                 <div className="text-zinc-400 text-center font-semibold py-12">No days in selected range</div>
               ) : (
@@ -290,7 +322,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Right Side: Sticky Floating Control Center */}
-            <aside className="lg:sticky lg:top-20 w-full lg:w-72 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm space-y-5 flex-shrink-0">
+            <aside className="w-full lg:w-72 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm flex flex-col gap-5 flex-shrink-0 h-full overflow-y-auto no-scrollbar">
               
               {/* Highlight Brush Tool */}
               <div className="space-y-2">
@@ -360,31 +392,34 @@ export default function CalendarPage() {
 
               <hr className="border-zinc-150 dark:border-zinc-800" />
 
-              {/* Month Navigator */}
+              {/* Month Navigator Dropdown */}
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider">
                   <ChevronRight size={13} className="text-blue-500" />
                   <span>Month Navigator</span>
                 </div>
-                <div className="flex flex-wrap gap-1 border border-zinc-100 dark:border-zinc-850/60 p-2 rounded-xl bg-zinc-50/50 dark:bg-zinc-950/20">
+                <select
+                  value={currentVisibleMonth}
+                  onChange={(e) => {
+                    const monthKey = e.target.value;
+                    setCurrentVisibleMonth(monthKey);
+                    const el = document.getElementById(`month-${monthKey}`);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="w-full p-2 text-xs bg-zinc-50 dark:bg-zinc-955 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
+                >
+                  <option value="" disabled>Select Month & Year</option>
                   {Object.entries(months).map(([monthKey, monthDays]) => {
                     const firstDay = monthDays[0];
-                    const monthShort = firstDay.toLocaleString('default', { month: 'short' });
-                    const yearShort = firstDay.getFullYear().toString().slice(-2);
+                    const monthFull = firstDay.toLocaleString('default', { month: 'long' });
+                    const yearFull = firstDay.getFullYear();
                     return (
-                      <button 
-                        key={monthKey}
-                        onClick={() => {
-                          const el = document.getElementById(`month-${monthKey}`);
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        className="px-2 py-1 text-[10px] font-semibold rounded border border-zinc-200/50 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition cursor-pointer bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400"
-                      >
-                        {monthShort} '{yearShort}
-                      </button>
+                      <option key={monthKey} value={monthKey}>
+                        {monthFull} {yearFull}
+                      </option>
                     );
                   })}
-                </div>
+                </select>
               </div>
 
               <hr className="border-zinc-150 dark:border-zinc-800" />

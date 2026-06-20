@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, X, ChevronRight, Menu } from 'lucide-react';
+import { disabledPapersList } from '@/utils/disabled-papers';
 
 interface Paper {
     examBoard: string;
@@ -12,15 +13,7 @@ interface Paper {
     year: number | string;
     isComingSoon: boolean;
     id: string;
-}
-
-interface DisabledPaperConfig {
-    examBoard: string | null;
-    examLevel: string | null;
-    subject: string | null;
-    paper: string | null;
-    series: string | null;
-    year: number | null;
+    isDisabled?: boolean;
 }
 
 // --- CONFIGURATION ---
@@ -47,67 +40,7 @@ const papersConfig: Record<string, Record<string, Record<string, string[]>>> = {
 const allSeries = ['Jan', 'Jun', 'Oct', 'Nov'];
 const years = [2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011];
 
-const disabledPapersConfig: DisabledPaperConfig[] = [
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2011, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2012, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2013, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2014, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2015, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Jun", year: 2015, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2016, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2017, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2018, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2019, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Jun", year: 2020, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Jun", year: 2021, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2022, paper: null },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Jun', year: 2020 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Jun', year: 2020 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Jun', year: 2020 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Jun', year: 2020 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Jan', year: 2019 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Jan', year: 2019 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Jan', year: 2019 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Jan', year: 2019 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Oct', year: 2018 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Oct', year: 2018 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Oct', year: 2018 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Oct', year: 2018 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Oct', year: 2015 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Oct', year: 2015 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Oct', year: 2015 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Oct', year: 2015 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Jun', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Jun', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Jun', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Jun', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Oct', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Oct', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Oct', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Oct', year: 2014 },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2022, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Jan", year: 2021, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Jun", year: 2020, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2019, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2018, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2017, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2016, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2015, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2014, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2013, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2012, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2022, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Jan", year: 2021, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Jun", year: 2020, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2019, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2018, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2017, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2016, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2015, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2014, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2013, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2012, paper: null },
-];
+// Shared config list imported from src/utils/disabled-papers.ts
 
 const getFullMonthName = (abbr: string): string => {
     switch (abbr) {
@@ -119,8 +52,8 @@ const getFullMonthName = (abbr: string): string => {
     }
 };
 
-const isPaperDisabled = (paper: Paper): boolean => {
-    return disabledPapersConfig.some(disabledEntry => {
+const isPaperDisabled = (paper: Partial<Paper>): boolean => {
+    return disabledPapersList.some(disabledEntry => {
         const matchBoard = disabledEntry.examBoard === null || disabledEntry.examBoard === paper.examBoard;
         const matchLevel = disabledEntry.examLevel === null || disabledEntry.examLevel === paper.examLevel;
         const matchSubject = disabledEntry.subject === null || disabledEntry.subject === paper.subject;
@@ -148,9 +81,7 @@ const generateAllPapers = (): Paper[] => {
                         isComingSoon: true,
                         id: `${board}_${level}_${subject}_ComingSoon`.replace(/\s/g, '_')
                     };
-                    if (!isPaperDisabled(paper)) {
-                        generatedPapers.push(paper);
-                    }
+                    generatedPapers.push(paper);
                 });
             } else {
                 Object.entries(subjects).forEach(([subject, papers]) => {
@@ -180,11 +111,17 @@ const generateAllPapers = (): Paper[] => {
                                     series: serie,
                                     year,
                                     isComingSoon: false,
-                                    id: `${board}_${level}_${subject}_${paper}_${serie}_${year}`.replace(/\s/g, '_')
+                                    id: `${board}_${level}_${subject}_${paper}_${serie}_${year}`.replace(/\s/g, '_'),
+                                    isDisabled: isPaperDisabled({
+                                        examBoard: board,
+                                        examLevel: level,
+                                        subject,
+                                        paper,
+                                        series: serie,
+                                        year
+                                    })
                                 };
-                                if (!isPaperDisabled(newPaper)) {
-                                    generatedPapers.push(newPaper);
-                                }
+                                generatedPapers.push(newPaper);
                             });
                         });
                     });
@@ -655,27 +592,42 @@ const PaperCard: React.FC<PaperCardProps> = ({ paper, onAction }) => {
     const subjColor = getSubjectColor(paper.subject);
 
     return (
-        <div className="flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/60 rounded-xl py-2.5 px-3 transition-all duration-200 shadow-xl shadow-zinc-900/5 group">
+        <div className={`flex items-center justify-between border rounded-xl py-2.5 px-3 transition-all duration-200 group ${
+            paper.isDisabled
+                ? 'bg-zinc-50/50 dark:bg-zinc-900/30 border-zinc-200/40 dark:border-zinc-800/40 opacity-40 select-none'
+                : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/60 shadow-xl shadow-zinc-900/5 hover:border-zinc-350 dark:hover:border-zinc-700'
+        }`}>
             <div className="flex items-center min-w-0">
                 <div className="text-[16px] font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                    <span style={{ color: subjColor }} className="font-bold mr-1.5">{paper.subject}</span>
-                    <span className="font-bold text-zinc-800 dark:text-zinc-200 mr-1.5">{paperPartDisplay}</span>
+                    <span style={{ color: paper.isDisabled ? '#71717a' : subjColor }} className="font-bold mr-1.5">{paper.subject}</span>
+                    <span className="font-bold text-zinc-850 dark:text-zinc-250 mr-1.5">{paperPartDisplay}</span>
                     <span className="text-zinc-400 dark:text-zinc-500">{seriesDisplay}{yearDisplay}</span>
                     {paper.isComingSoon && <span className="text-[10px] text-zinc-400 uppercase ml-2">(Coming Soon)</span>}
+                    {paper.isDisabled && <span className="text-[10px] text-red-500/70 dark:text-red-455/70 font-semibold uppercase ml-2">(Disabled)</span>}
                 </div>
             </div>
 
             {!paper.isComingSoon && (
                 <div className="flex items-center gap-2 shrink-0 ml-4">
                     <button
-                        onClick={() => onAction(paper, 'qp')}
-                        className="px-3 py-1.5 text-center bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[11px] font-bold transition-colors cursor-pointer"
+                        onClick={() => !paper.isDisabled && onAction(paper, 'qp')}
+                        disabled={paper.isDisabled}
+                        className={`px-3 py-1.5 text-center rounded-md text-[11px] font-bold transition-colors ${
+                            paper.isDisabled
+                                ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-605 cursor-not-allowed'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                        }`}
                     >
                         Question
                     </button>
                     <button
-                        onClick={() => onAction(paper, 'ms')}
-                        className="px-3 py-1.5 text-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md text-[11px] font-bold transition-colors cursor-pointer"
+                        onClick={() => !paper.isDisabled && onAction(paper, 'ms')}
+                        disabled={paper.isDisabled}
+                        className={`px-3 py-1.5 text-center rounded-md text-[11px] font-bold transition-colors ${
+                            paper.isDisabled
+                                ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-605 cursor-not-allowed'
+                                : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 cursor-pointer'
+                        }`}
                     >
                         Answer
                     </button>

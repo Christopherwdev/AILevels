@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { disabledPapersList } from '@/utils/disabled-papers';
 import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -46,43 +47,7 @@ const igcseSeriesOrder: Record<string, number> = { 'Jan': 0, 'Jun': 1, 'Nov': 2 
 const igcseMaxYearSelect = 2025;
 const igcseMaxSeriesSelect = 'Nov';
 
-const disabledPapersList = [
-    { examBoard: 'Edexcel', examLevel: 'IGCSE', subject: 'Chinese', series: 'Jan', paper: null, year: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2011, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2012, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2013, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2014, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2015, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Jun", year: 2015, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2016, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2017, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2018, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2019, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Jun", year: 2020, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "Chinese", series: "Nov", year: 2022, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2022, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Jan", year: 2021, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Jun", year: 2020, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2019, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2018, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2017, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2016, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2015, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2014, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2013, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2012, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2022, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Jan", year: 2021, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Jun", year: 2020, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2019, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2018, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2017, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2016, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2015, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2014, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2013, paper: null },
-    { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English B", series: "Nov", year: 2012, paper: null },
-];
+// Shared config list imported from src/utils/disabled-papers.ts
 
 interface YearSeries {
     year: number;
