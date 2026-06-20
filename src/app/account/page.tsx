@@ -215,7 +215,7 @@ export default function AccountPage() {
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Profile & Account Settings</h1>
           <p className="text-sm text-zinc-500 mt-1">
-            Customize your public unipro card and secure your login details.
+            Customize your public Precision Edu card and secure your login details.
           </p>
         </div>
 
@@ -294,7 +294,7 @@ export default function AccountPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-zinc-500 mb-1">
-                      Username (unipro handle)
+                      Username (Precision Edu handle)
                     </label>
                     <input
                       type="text"
@@ -311,7 +311,7 @@ export default function AccountPage() {
                       Account Email
                     </label>
                     <div className="px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-850 text-sm font-medium text-zinc-400 truncate">
-                      {email || 'student@unipro.io'}
+                      {email || 'student@precisionedu.io'}
                     </div>
                     <p className="text-[10px] text-zinc-400 mt-1">Primary email is private and locked</p>
                   </div>

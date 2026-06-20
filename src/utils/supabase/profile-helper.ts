@@ -20,7 +20,7 @@ export const DEFAULT_AVATARS = [
 ];
 
 // Fallback profile if Supabase tables are not set up yet
-const LOCAL_STORAGE_KEY = 'unipro_local_profile';
+const LOCAL_STORAGE_KEY = 'precision_edu_local_profile';
 
 export function getLocalProfileFallback(userId: string, email: string | null): UserProfile {
   if (typeof window !== 'undefined') {
@@ -76,7 +76,7 @@ export async function ensureUserProfile(
     if (error) {
       // Table doesn't exist yet, return fallback
       if (error.code === 'PGRST205') {
-        console.warn('unipro profiles table not found in Supabase. Using localStorage fallback.');
+        console.warn('Precision Edu profiles table not found in Supabase. Using localStorage fallback.');
         return { profile: getLocalProfileFallback(userId, email), isFallback: true };
       }
       throw error;
@@ -100,7 +100,7 @@ export async function ensureUserProfile(
     const defaultProfile: UserProfile = {
       id: userId,
       username,
-      bio: 'A-Levels student using unipro to track exam performance.',
+      bio: 'A-Levels student using Precision Edu to track exam performance.',
       avatar_url: DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)]
     };
 

@@ -80,14 +80,9 @@ export default function Navbar({ userEmail }: NavbarProps) {
           {/* Logo Section */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2 group">
-              <Image
-                src="/Unipro logo.svg"
-                alt="unipro"
-                width={105}
-                height={32}
-                priority
-                className="h-8 w-auto object-contain"
-              />
+              <span className="text-lg sm:text-xl font-black tracking-tight bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 bg-clip-text text-transparent transition-all duration-300 group-hover:opacity-90">
+                Precision Edu
+              </span>
             </Link>
 
             {/* Navigation Links (Visible only when logged in) */}

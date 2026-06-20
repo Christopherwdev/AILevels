@@ -74,14 +74,11 @@ export default function AuthPage() {
     <div className="min-h-screen w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 px-4">
       <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md p-8 relative z-10 transition-all duration-300">
         <div className="text-center mb-8">
-          <Image
-            src="/Unipro logo.svg"
-            alt="unipro"
-            width={131}
-            height={40}
-            priority
-            className="h-10 w-auto mx-auto mb-6 object-contain"
-          />
+          <div className="mb-6 flex justify-center">
+            <span className="text-3xl font-black tracking-tight bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 bg-clip-text text-transparent">
+              Precision Edu
+            </span>
+          </div>
           <h1 className="text-2xl font-extrabold tracking-tight">
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </h1>

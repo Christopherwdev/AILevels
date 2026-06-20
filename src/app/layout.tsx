@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "unipro | A-Levels Study Tools (Edexcel & Cambridge)",
+  title: "Precision Edu | A-Levels Study Tools (Edexcel & Cambridge)",
   description: "Functional educational dashboard and past papers search engine for A-Level and IGCSE students.",
 };
 

@@ -614,7 +614,7 @@ export default function PastPapersPage() {
                             <div className="space-y-1">
                                 <span className="font-bold text-zinc-700 dark:text-zinc-300">1. Ownership & Copyrights</span>
                                 <p>All past papers, mark schemes, and materials are properties of Pearson plc / Cambridge Assessment.</p>
-                                <p>unipro has no claim, credentials, or rights of ownership over these components.</p>
+                                <p>Precision Edu has no claim, credentials, or rights of ownership over these components.</p>
                             </div>
                             <div className="space-y-1">
                                 <span className="font-bold text-zinc-700 dark:text-zinc-300">2. Educational Intent</span>
@@ -623,7 +623,7 @@ export default function PastPapersPage() {
                             </div>
                         </div>
                         <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 text-[10px] text-center text-zinc-400">
-                            © 2026 unipro | Independent revision platform | Pearson Edexcel & CIE Materials educational utilization.
+                            © 2026 Precision Edu | Independent revision platform | Pearson Edexcel & CIE Materials educational utilization.
                         </div>
                     </footer>
                 </div>

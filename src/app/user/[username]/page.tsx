@@ -275,7 +275,7 @@ export default function UserProfilePage({ params }: PageProps) {
             <div className="flex flex-col sm:flex-row gap-3 items-center">
               <h2 className="text-xl font-extrabold tracking-tight flex items-center gap-1.5">
                 @{targetProfile.username}
-                <span title="Verified unipro Student">
+                <span title="Verified Precision Edu Student">
                   <CheckCircle2 size={16} className="text-blue-500 fill-blue-500 dark:fill-none" />
                 </span>
               </h2>
@@ -336,7 +336,7 @@ export default function UserProfilePage({ params }: PageProps) {
             <div className="space-y-1">
               <div className="font-bold text-sm flex items-center justify-center sm:justify-start gap-1">
                 <GraduationCap size={15} className="text-zinc-400" />
-                <span>unipro Academic Profile</span>
+                <span>Precision Edu Academic Profile</span>
               </div>
               <p className="text-sm text-zinc-650 dark:text-zinc-300 max-w-lg leading-relaxed whitespace-pre-wrap">
                 {targetProfile.bio || "No profile biography written yet."}

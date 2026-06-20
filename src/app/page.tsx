@@ -13,16 +13,11 @@ export default async function LandingPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 relative z-10">
         {/* Hero Banner Section */}
         <div className="text-center max-w-3xl mx-auto mb-16 md:mb-20">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-none mb-6 flex justify-center">
-            <Image
-              src="/Unipro logo.svg"
-              alt="unipro"
-              width={210}
-              height={64}
-              priority
-              className="h-16 sm:h-20 w-auto object-contain"
-            />
-            <span className="sr-only">unipro Study Station</span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-none mb-6 flex justify-center">
+            <span className="bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 bg-clip-text text-transparent py-2">
+              Precision Edu
+            </span>
+            <span className="sr-only">Precision Edu Study Station</span>
           </h1>
           <p className="text-sm sm:text-base md:text-lg text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
             A minimalist, high-performance toolkit for advanced students. Track performance progress, examine grade metrics, and query past papers.

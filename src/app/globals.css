@@ -141,13 +141,8 @@
   background-color: var(--primary-hover);
 }
 
-/* Remove rubberband bounce effect on all scrollable areas and elements */
-* {
-  overscroll-behavior: none !important;
-  overscroll-behavior-y: none !important;
-}
-
-html, body {
+/* Remove rubberband bounce effect on main page and scrollable containers */
+html, body, .overflow-y-auto, .overflow-auto, [class*="overflow-"] {
   overscroll-behavior: none !important;
   overscroll-behavior-y: none !important;
 }
