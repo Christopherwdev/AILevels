@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import Image from 'next/image';
-import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Settings } from 'lucide-react';
+import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Settings, BookOpen, MessageCircle, GraduationCap } from 'lucide-react';
 import { ensureUserProfile } from '@/utils/supabase/profile-helper';
+import { subjects } from '@/utils/subjects';
 
 interface NavbarProps {
   userEmail: string | null;
@@ -18,7 +18,9 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const supabase = createClient();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isLearnMenuOpen, setIsLearnMenuOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const learnMenuRef = useRef<HTMLDivElement>(null);
 
   // Fetch username dynamically
   useEffect(() => {
@@ -52,6 +54,17 @@ export default function Navbar({ userEmail }: NavbarProps) {
     }
   }, []);
 
+  // Close learn menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (learnMenuRef.current && !learnMenuRef.current.contains(e.target as Node)) {
+        setIsLearnMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
@@ -73,6 +86,18 @@ export default function Navbar({ userEmail }: NavbarProps) {
     return null;
   }
 
+  const navLinkClass = (path: string) =>
+    `flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+      pathname.startsWith(path)
+        ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 pb-1 mt-0.5'
+        : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'
+    }`;
+
+  const mobileLinkClass = (path: string) =>
+    `p-2 border border-zinc-200 dark:border-zinc-850 rounded ${
+      pathname.startsWith(path) ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-955' : 'bg-transparent text-zinc-500'
+    }`;
+
   return (
     <nav className="w-full bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-40 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,39 +113,76 @@ export default function Navbar({ userEmail }: NavbarProps) {
             {/* Navigation Links (Visible only when logged in) */}
             {userEmail && (
               <div className="hidden md:flex items-center gap-6">
-                <Link
-                  href="/dashboard"
-                  className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                    pathname.startsWith('/dashboard')
-                      ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 pb-1 mt-0.5'
-                      : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'
-                  }`}
-                >
+                <Link href="/dashboard" className={navLinkClass('/dashboard')}>
                   <Layout size={14} />
                   Dashboard
                 </Link>
-                <Link
-                  href="/calendar"
-                  className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                    pathname.startsWith('/calendar')
-                      ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 pb-1 mt-0.5'
-                      : 'text-zinc-500 hover:text-zinc-955 dark:text-zinc-400 dark:hover:text-zinc-100'
-                  }`}
-                >
+                <Link href="/calendar" className={navLinkClass('/calendar')}>
                   <Calendar size={14} />
                   Calendar
                 </Link>
-                <Link
-                  href="/past-papers"
-                  className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                    pathname.startsWith('/past-papers')
-                      ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 pb-1 mt-0.5'
-                      : 'text-zinc-500 hover:text-zinc-955 dark:text-zinc-400 dark:hover:text-zinc-100'
-                  }`}
-                >
+
+                {/* Learn Dropdown (Hidden for now)
+                <div ref={learnMenuRef} className="relative">
+                  <button
+                    onClick={() => setIsLearnMenuOpen(!isLearnMenuOpen)}
+                    className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      pathname.startsWith('/learn')
+                        ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 pb-1 mt-0.5'
+                        : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'
+                    }`}
+                  >
+                    <BookOpen size={14} />
+                    Learn
+                    <ChevronDown size={12} className={`transition-transform duration-200 ${isLearnMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isLearnMenuOpen && (
+                    <div className="absolute left-0 mt-3 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-50 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IAL Subjects</div>
+                      {subjects.filter(s => s.level === 'IAL').map(s => (
+                        <Link
+                          key={s.slug}
+                          href={`/learn/${s.slug}`}
+                          onClick={() => setIsLearnMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <span className="text-sm">{s.icon}</span>
+                          {s.name}
+                        </Link>
+                      ))}
+                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                      <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IGCSE Subjects</div>
+                      {subjects.filter(s => s.level === 'IGCSE').map(s => (
+                        <Link
+                          key={s.slug}
+                          href={`/learn/${s.slug}`}
+                          onClick={() => setIsLearnMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <span className="text-sm">{s.icon}</span>
+                          {s.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                */}
+
+                <Link href="/past-papers" className={navLinkClass('/past-papers')}>
                   <FileText size={14} />
                   Past Papers
                 </Link>
+                <Link href="/chat" className={navLinkClass('/chat')}>
+                  <MessageCircle size={14} />
+                  Chat
+                </Link>
+                {/* Tutors (Hidden for now)
+                <Link href="/tutors" className={navLinkClass('/tutors')}>
+                  <GraduationCap size={14} />
+                  Tutors
+                </Link>
+                */}
               </div>
             )}
           </div>
@@ -141,35 +203,26 @@ export default function Navbar({ userEmail }: NavbarProps) {
               <div className="flex items-center gap-3">
                 {/* Mobile Navigation Dropdown/Buttons */}
                 <div className="md:hidden flex gap-1">
-                  <Link
-                    href="/dashboard"
-                    className={`p-2 border border-zinc-200 dark:border-zinc-850 rounded ${
-                      pathname.startsWith('/dashboard') ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-955' : 'bg-transparent text-zinc-500'
-                    }`}
-                  >
+                  <Link href="/dashboard" className={mobileLinkClass('/dashboard')}>
                     <Layout size={16} />
                   </Link>
-                  <Link
-                    href="/calendar"
-                    className={`p-2 border border-zinc-200 dark:border-zinc-850 rounded ${
-                      pathname.startsWith('/calendar') ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-955' : 'bg-transparent text-zinc-500'
-                    }`}
-                  >
+                  <Link href="/calendar" className={mobileLinkClass('/calendar')}>
                     <Calendar size={16} />
                   </Link>
-                  <Link
-                    href="/past-papers"
-                    className={`p-2 border border-zinc-200 dark:border-zinc-850 rounded ${
-                      pathname.startsWith('/past-papers') ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-955' : 'bg-transparent text-zinc-500'
-                    }`}
-                  >
+                  <Link href="/past-papers" className={mobileLinkClass('/past-papers')}>
                     <FileText size={16} />
                   </Link>
+                  <Link href="/chat" className={mobileLinkClass('/chat')}>
+                    <MessageCircle size={16} />
+                  </Link>
+                  {/* Tutors Mobile (Hidden for now)
+                  <Link href="/tutors" className={mobileLinkClass('/tutors')}>
+                    <GraduationCap size={16} />
+                  </Link>
+                  */}
                   <Link
                     href={username ? `/user/${username}` : '/account'}
-                    className={`p-2 border border-zinc-200 dark:border-zinc-850 rounded ${
-                      pathname.startsWith('/user/') || pathname.startsWith('/account') ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-955' : 'bg-transparent text-zinc-500'
-                    }`}
+                    className={mobileLinkClass('/user/')}
                   >
                     <User size={16} />
                   </Link>
