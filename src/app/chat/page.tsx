@@ -326,9 +326,9 @@ export default function ChatPage() {
         </div>
 
         {/* Messages */}
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-1 no-scrollbar bg-white dark:bg-black">
-          {messages.length === 0 && (
-            <div className="h-full flex items-center justify-center">
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar bg-white dark:bg-black">
+          {messages.length === 0 ? (
+            <div className="h-full flex items-center justify-center max-w-xl mx-auto">
               <div className="text-center space-y-2">
                 <div
                   className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl shadow-inner select-none mb-4"
@@ -342,108 +342,110 @@ export default function ChatPage() {
                 </p>
               </div>
             </div>
-          )}
+          ) : (
+            <div className="max-w-4xl mx-auto w-full min-h-full flex flex-col justify-end space-y-1">
+              {messages.map((msg, i) => {
+                const isOwn = msg.user_id === userId;
+                const prevMsg = i > 0 ? messages[i - 1] : null;
+                const nextMsg = i < messages.length - 1 ? messages[i + 1] : null;
 
-          {messages.map((msg, i) => {
-            const isOwn = msg.user_id === userId;
-            const prevMsg = i > 0 ? messages[i - 1] : null;
-            const nextMsg = i < messages.length - 1 ? messages[i + 1] : null;
+                // Date separator check
+                const showDateSep = i === 0 || formatDate(messages[i - 1].created_at) !== formatDate(msg.created_at);
 
-            // Date separator check
-            const showDateSep = i === 0 || formatDate(messages[i - 1].created_at) !== formatDate(msg.created_at);
+                // Grouping checks (consecutive messages from same user within 5 minutes)
+                const isSameSenderAsPrev = prevMsg && prevMsg.user_id === msg.user_id && 
+                  (new Date(msg.created_at).getTime() - new Date(prevMsg.created_at).getTime() < 5 * 60 * 1000);
 
-            // Grouping checks (consecutive messages from same user within 5 minutes)
-            const isSameSenderAsPrev = prevMsg && prevMsg.user_id === msg.user_id && 
-              (new Date(msg.created_at).getTime() - new Date(prevMsg.created_at).getTime() < 5 * 60 * 1000);
+                const isSameSenderAsNext = nextMsg && nextMsg.user_id === msg.user_id && 
+                  (new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime() < 5 * 60 * 1000);
 
-            const isSameSenderAsNext = nextMsg && nextMsg.user_id === msg.user_id && 
-              (new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime() < 5 * 60 * 1000);
+                const senderProfile = profiles[msg.user_id] || { username: msg.username, avatar_url: null };
 
-            const senderProfile = profiles[msg.user_id] || { username: msg.username, avatar_url: null };
-
-            return (
-              <React.Fragment key={msg.id}>
-                {showDateSep && (
-                  <div className="flex items-center justify-center py-4 select-none">
-                    <span className="text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase">
-                      {formatDate(msg.created_at)}
-                    </span>
-                  </div>
-                )}
-                
-                <div className={`flex items-end gap-2.5 ${isOwn ? 'justify-end' : 'justify-start'} ${isSameSenderAsPrev ? 'mt-0.5' : 'mt-3'}`}>
-                  
-                  {/* Avatar left side (only for other users, and only for the LAST message in a consecutive group) */}
-                  {!isOwn && (
-                    <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center">
-                      {!isSameSenderAsNext ? (
-                        senderProfile.avatar_url ? (
-                          <img
-                            src={senderProfile.avatar_url}
-                            alt={senderProfile.username}
-                            className="w-7 h-7 rounded-full object-cover border border-zinc-100 dark:border-zinc-900"
-                          />
-                        ) : (
-                          <div className={`w-7 h-7 rounded-full bg-gradient-to-tr ${getAvatarBg(senderProfile.username)} text-[10px] font-bold text-white flex items-center justify-center uppercase shadow-sm`}>
-                            {senderProfile.username.charAt(0)}
-                          </div>
-                        )
-                      ) : (
-                        <div className="w-7" /> // Spacer to preserve alignment
-                      )}
-                    </div>
-                  )}
-
-                  {/* Message bubble block */}
-                  <div className={`flex flex-col max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
+                return (
+                  <React.Fragment key={msg.id}>
+                    {showDateSep && (
+                      <div className="flex items-center justify-center py-4 select-none">
+                        <span className="text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase">
+                          {formatDate(msg.created_at)}
+                        </span>
+                      </div>
+                    )}
                     
-                    {/* Username (only for other users, and only on the FIRST message of a group) */}
-                    {!isOwn && !isSameSenderAsPrev && (
-                      <span className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 mb-1 ml-1 select-none">
-                        {senderProfile.username}
-                      </span>
-                    )}
-
-                    {/* Bubble */}
-                    <div
-                      className={`rounded-2xl px-4 py-2.5 ${
-                        isOwn
-                          ? `bg-blue-500 dark:bg-blue-600 text-white ${isSameSenderAsPrev ? 'rounded-r-md' : 'rounded-tr-md'} ${isSameSenderAsNext ? 'rounded-br-md' : 'rounded-br-2xl'}`
-                          : `bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-50 dark:border-zinc-900/50 ${isSameSenderAsPrev ? 'rounded-l-md' : 'rounded-tl-md'} ${isSameSenderAsNext ? 'rounded-bl-md' : 'rounded-bl-2xl'}`
-                      }`}
-                    >
-                      {msg.file_type === 'image' && msg.file_url && (
-                        <img src={msg.file_url} alt="shared file" className="max-w-full max-h-64 rounded-lg object-contain my-1 select-none" />
+                    <div className={`flex items-end gap-2.5 ${isOwn ? 'justify-end' : 'justify-start'} ${isSameSenderAsPrev ? 'mt-0.5' : 'mt-3'}`}>
+                      
+                      {/* Avatar left side (only for other users, and only for the LAST message in a consecutive group) */}
+                      {!isOwn && (
+                        <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center">
+                          {!isSameSenderAsNext ? (
+                            senderProfile.avatar_url ? (
+                              <img
+                                src={senderProfile.avatar_url}
+                                alt={senderProfile.username}
+                                className="w-7 h-7 rounded-full object-cover border border-zinc-100 dark:border-zinc-900"
+                              />
+                            ) : (
+                              <div className={`w-7 h-7 rounded-full bg-gradient-to-tr ${getAvatarBg(senderProfile.username)} text-[10px] font-bold text-white flex items-center justify-center uppercase shadow-sm`}>
+                                {senderProfile.username.charAt(0)}
+                              </div>
+                            )
+                          ) : (
+                            <div className="w-7" /> // Spacer to preserve alignment
+                          )}
+                        </div>
                       )}
-                      {msg.file_type === 'file' && msg.file_url && (
-                        <a
-                          href={msg.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`flex items-center gap-2 text-xs font-semibold underline py-1 ${isOwn ? 'text-blue-100' : 'text-blue-500'}`}
+
+                      {/* Message bubble block */}
+                      <div className={`flex flex-col max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
+                        
+                        {/* Username (only for other users, and only on the FIRST message of a group) */}
+                        {!isOwn && !isSameSenderAsPrev && (
+                          <span className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 mb-1 ml-1 select-none">
+                            {senderProfile.username}
+                          </span>
+                        )}
+
+                        {/* Bubble */}
+                        <div
+                          className={`rounded-2xl px-4 py-2.5 ${
+                            isOwn
+                              ? `bg-blue-500 dark:bg-blue-600 text-white ${isSameSenderAsPrev ? 'rounded-r-md' : 'rounded-tr-md'} ${isSameSenderAsNext ? 'rounded-br-md' : 'rounded-br-2xl'}`
+                              : `bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-50 dark:border-zinc-900/50 ${isSameSenderAsPrev ? 'rounded-l-md' : 'rounded-tl-md'} ${isSameSenderAsNext ? 'rounded-bl-md' : 'rounded-bl-2xl'}`
+                          }`}
                         >
-                          📎 {msg.file_name || 'Attached File'}
-                        </a>
-                      )}
-                      {msg.content && (
-                        <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                      )}
+                          {msg.file_type === 'image' && msg.file_url && (
+                            <img src={msg.file_url} alt="shared file" className="max-w-full max-h-64 rounded-lg object-contain my-1 select-none" />
+                          )}
+                          {msg.file_type === 'file' && msg.file_url && (
+                            <a
+                              href={msg.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-2 text-xs font-semibold underline py-1 ${isOwn ? 'text-blue-100' : 'text-blue-500'}`}
+                            >
+                              📎 {msg.file_name || 'Attached File'}
+                            </a>
+                          )}
+                          {msg.content && (
+                            <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                          )}
+                        </div>
+
+                        {/* Time (Only show if NOT followed by another message from same sender within 5 mins) */}
+                        {!isSameSenderAsNext && (
+                          <span className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-1 mx-1 select-none font-medium">
+                            {formatTime(msg.created_at)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Avatar right side (optional/skipped for own user, Instagram doesn't show own avatar next to bubble) */}
                     </div>
-
-                    {/* Time (Only show if NOT followed by another message from same sender within 5 mins) */}
-                    {!isSameSenderAsNext && (
-                      <span className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-1 mx-1 select-none font-medium">
-                        {formatTime(msg.created_at)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Avatar right side (optional/skipped for own user, Instagram doesn't show own avatar next to bubble) */}
-                </div>
-              </React.Fragment>
-            );
-          })}
-          <div ref={messagesEndRef} />
+                  </React.Fragment>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
         </div>
 
         {/* Message Input (Instagram Capsule Style) */}
