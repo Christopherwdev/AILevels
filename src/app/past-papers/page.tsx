@@ -591,12 +591,12 @@ export default function PastPapersPage() {
             </aside>
 
             {/* Main Content View */}
-            <main className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 lg:p-8 no-scrollbar">
+            <main className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto no-scrollbar">
                 {/* Engine Header Info Block */}
                 <div className="flex flex-col gap-4 mb-6">
                     <div className="flex justify-between items-end">
                         <div>
-                            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">{examBoard} Past Paper Engine</h1>
+                            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">{examBoard} Past Papers</h1>
                             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-1">
                                 {examBoard} • {examLevel} {subject && `• ${subject}`} {unit && `• ${unit}`}
                             </p>

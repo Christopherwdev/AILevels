@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { Settings, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Settings, Paintbrush, ChevronRight, ListTodo, Check, Plus, Trash2 } from 'lucide-react';
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -12,17 +11,19 @@ export default function CalendarPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Calendar dates range
+  // Calendar dates range: dynamic from 6 months ago to 18 months in the future
   const [calendarRange, setCalendarRange] = useState<{start: string, end: string}>(() => {
     const today = new Date();
-    const start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
-    const end = new Date(today.getFullYear(), today.getMonth() + 12, 0).toISOString().slice(0, 10);
+    const start = new Date(today.getFullYear(), today.getMonth() - 6, 1).toISOString().slice(0, 10);
+    const end = new Date(today.getFullYear(), today.getMonth() + 18, 0).toISOString().slice(0, 10);
     return { start, end };
   });
 
   const [calendarData, setCalendarData] = useState<Record<string, string>>({});
-  const [isCalendarRangeModalOpen, setIsCalendarRangeModalOpen] = useState(false);
-  const [calendarRangeDraft, setCalendarRangeDraft] = useState(calendarRange);
+  const [calendarHighlights, setCalendarHighlights] = useState<Record<string, 'green' | 'red' | 'blue' | 'purple' | 'none'>>({});
+  const [activePaintColor, setActivePaintColor] = useState<'green' | 'red' | 'blue' | 'purple' | 'none'>('none');
+  const [todoList, setTodoList] = useState<{ id: string; text: string; completed: boolean }[]>([]);
+  const [newTodoText, setNewTodoText] = useState('');
 
   // Helper to generate calendar days between two dates
   function getCalendarDays(start: string, end: string) {
@@ -36,15 +37,15 @@ export default function CalendarPage() {
     return days;
   }
 
-  // Helper to group days by month for table rendering
-  function groupDaysByMonth(days: Date[]) {
-    const months: Record<string, Date[]> = {};
-    days.forEach(day => {
+  // Helper to group days by month for grid rendering
+  function groupDaysByMonth(daysList: Date[]) {
+    const monthsObj: Record<string, Date[]> = {};
+    daysList.forEach(day => {
       const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}`;
-      if (!months[key]) months[key] = [];
-      months[key].push(day);
+      if (!monthsObj[key]) monthsObj[key] = [];
+      monthsObj[key].push(day);
     });
-    return months;
+    return monthsObj;
   }
 
   // Load calendar state from Supabase on mount
@@ -65,15 +66,26 @@ export default function CalendarPage() {
         .maybeSingle();
         
       if (calendarDataResult?.content) {
-        setCalendarRange(calendarDataResult.content.calendarRange || calendarRange);
         setCalendarData(calendarDataResult.content.calendarData || {});
+        setCalendarHighlights(calendarDataResult.content.calendarHighlights || {});
       }
+
+      // Load local study tasks
+      const localTodos = localStorage.getItem('calendar_todos');
+      if (localTodos) {
+        try {
+          setTodoList(JSON.parse(localTodos));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      
       setLoading(false);
     }
     loadCalendarState();
   }, [router, supabase]);
 
-  // Save calendar to Supabase on change (debounced)
+  // Save calendar content to Supabase on change (debounced)
   useEffect(() => {
     if (!userId) return;
     const handler = setTimeout(async () => {
@@ -89,7 +101,7 @@ export default function CalendarPage() {
           await supabase
             .from('dashboard_calendar')
             .update({ 
-              content: { calendarRange, calendarData }
+              content: { calendarRange, calendarData, calendarHighlights }
             })
             .eq('id', existingCalendar.id);
         } else {
@@ -98,7 +110,7 @@ export default function CalendarPage() {
             .insert({
               user_id: userId,
               title: 'main_calendar',
-              content: { calendarRange, calendarData }
+              content: { calendarRange, calendarData, calendarHighlights }
             });
         }
       } catch (error) {
@@ -106,149 +118,344 @@ export default function CalendarPage() {
       }
     }, 1000); // 1s debounce
     return () => clearTimeout(handler);
-  }, [calendarRange, calendarData, userId, supabase]);
+  }, [calendarRange, calendarData, calendarHighlights, userId, supabase]);
 
   const days = getCalendarDays(calendarRange.start, calendarRange.end);
   const months = groupDaysByMonth(days);
 
+  // Scroll to today's date cell after load is finished
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        const todayEl = document.getElementById('today-cell');
+        if (todayEl) {
+          todayEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      }, 300);
+    }
+  }, [loading]);
+
+  // Todo functions
+  const addTodo = () => {
+    if (!newTodoText.trim()) return;
+    const newTask = {
+      id: Date.now().toString(),
+      text: newTodoText.trim(),
+      completed: false
+    };
+    const updated = [...todoList, newTask];
+    setTodoList(updated);
+    localStorage.setItem('calendar_todos', JSON.stringify(updated));
+    setNewTodoText('');
+  };
+
+  const toggleTodo = (id: string) => {
+    const updated = todoList.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+    setTodoList(updated);
+    localStorage.setItem('calendar_todos', JSON.stringify(updated));
+  };
+
+  const deleteTodo = (id: string) => {
+    const updated = todoList.filter(t => t.id !== id);
+    setTodoList(updated);
+    localStorage.setItem('calendar_todos', JSON.stringify(updated));
+  };
+
+  // Day paint highlighting
+  const handleDayClick = (dateStr: string) => {
+    if (activePaintColor === 'none') {
+      setCalendarHighlights(prev => {
+        const copy = { ...prev };
+        delete copy[dateStr];
+        return copy;
+      });
+      return;
+    }
+    setCalendarHighlights(prev => ({
+      ...prev,
+      [dateStr]: activePaintColor
+    }));
+  };
+
+  const handleTextareaChange = (dateStr: string, val: string) => {
+    setCalendarData(d => ({ ...d, [dateStr]: val }));
+  };
+
   return (
     <div className="flex-1 w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-0 flex flex-col p-4 sm:p-6 lg:p-8">
-      <div className="max-w-5xl w-full mx-auto space-y-6 flex-1 flex flex-col">
-        {/* Header toolbar */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 text-zinc-500 hover:text-zinc-850 dark:hover:text-zinc-200 uppercase tracking-wider btn-notion-white"
-            >
-              <ArrowLeft size={13} />
-              Dashboard
-            </Link>
-          </div>
- 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setCalendarRangeDraft(calendarRange);
-                setIsCalendarRangeModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 btn-notion-white"
-            >
-              <Settings size={14} />
-              Date Range
-            </button>
-          </div>
-        </div>
-
-        {/* Page Title */}
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Revision Calendar</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Maintain your study syllabus, track exam schedules, and keep study notes.
-          </p>
-        </div>
+      <div className="max-w-7xl w-full mx-auto space-y-6 flex-1 flex flex-col">
+        {/* Top title text removed */}
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-xs uppercase text-zinc-400 font-bold tracking-widest">
             Loading Calendar...
           </div>
         ) : (
-          <div className="flex-1 space-y-8 overflow-y-auto pr-1">
-            {days.length === 0 ? (
-              <div className="text-zinc-400 text-center font-semibold py-12">No days in selected range</div>
-            ) : (
-              Object.entries(months).map(([monthKey, monthDays]) => {
-                const firstDay = monthDays[0];
-                const year = firstDay.getFullYear();
-                const monthName = firstDay.toLocaleString('default', { month: 'long' });
-                const firstWeekday = new Date(year, firstDay.getMonth(), 1).getDay();
-                
-                const weeks: (Date|null)[][] = [[]];
-                let week = weeks[0];
-                for (let i = 0; i < firstWeekday; ++i) week.push(null);
-                monthDays.forEach((date) => {
-                  if (week.length === 7) {
-                    week = [];
-                    weeks.push(week);
+          <div className="flex-1 flex flex-col lg:flex-row gap-6 items-start relative w-full">
+            {/* Left Side: Calendar Month Lists */}
+            <div id="calendar-months-container" className="flex-1 space-y-8 overflow-y-auto pr-1 max-h-[calc(100vh-14rem)] no-scrollbar scroll-smooth w-full">
+              {days.length === 0 ? (
+                <div className="text-zinc-400 text-center font-semibold py-12">No days in selected range</div>
+              ) : (
+                Object.entries(months).map(([monthKey, monthDays]) => {
+                  const firstDay = monthDays[0];
+                  const year = firstDay.getFullYear();
+                  const monthName = firstDay.toLocaleString('default', { month: 'long' });
+                  const firstWeekday = new Date(year, firstDay.getMonth(), 1).getDay();
+                  
+                  const gridItems: (Date | null)[] = [];
+                  for (let i = 0; i < firstWeekday; i++) {
+                    gridItems.push(null);
                   }
-                  week.push(date);
-                });
-                while (week.length < 7) week.push(null);
+                  monthDays.forEach(date => gridItems.push(date));
+                  
+                  return (
+                    <div id={`month-${monthKey}`} key={monthKey} className="space-y-3 scroll-mt-6">
+                      <h2 className="text-xs font-bold text-zinc-450 dark:text-zinc-400 uppercase tracking-wider pl-1">
+                        {monthName} {year}
+                      </h2>
+                      
+                      <div className="grid grid-cols-7 gap-1 bg-zinc-150/60 dark:bg-zinc-900/60 border border-zinc-200/40 dark:border-zinc-800/40 rounded-xl p-1 shadow-sm">
+                        {/* Day Names Header */}
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                          <div key={d} className="text-center py-1 text-[9px] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                            {d}
+                          </div>
+                        ))}
+                        
+                        {/* Day Cells */}
+                        {gridItems.map((date, idx) => {
+                          if (!date) {
+                            return (
+                              <div key={`empty-${idx}`} className="h-24 bg-zinc-50/20 dark:bg-zinc-950/10 rounded-lg border border-transparent"></div>
+                            );
+                          }
+                          
+                          const dateStr = date.toISOString().slice(0, 10);
+                          const highlightColor = calendarHighlights[dateStr] || 'none';
+                          
+                          // Color mapping style object using exact Apple brand colors
+                          let inlineStyle: React.CSSProperties = {};
+                          if (highlightColor === 'green') {
+                            inlineStyle = { backgroundColor: 'rgba(83, 215, 105, 0.07)', borderColor: 'rgba(83, 215, 105, 0.35)', color: '#53D769' };
+                          } else if (highlightColor === 'red') {
+                            inlineStyle = { backgroundColor: 'rgba(252, 61, 57, 0.07)', borderColor: 'rgba(252, 61, 57, 0.35)', color: '#FC3D39' };
+                          } else if (highlightColor === 'blue') {
+                            inlineStyle = { backgroundColor: 'rgba(20, 126, 251, 0.07)', borderColor: 'rgba(20, 126, 251, 0.35)', color: '#147EFB' };
+                          } else if (highlightColor === 'purple') {
+                            inlineStyle = { backgroundColor: 'rgba(252, 49, 88, 0.07)', borderColor: 'rgba(252, 49, 88, 0.35)', color: '#FC3158' };
+                          }
+                          
+                          const isToday = date.toDateString() === new Date().toDateString();
+                          
+                          return (
+                            <div 
+                              key={dateStr}
+                              id={isToday ? "today-cell" : undefined}
+                              onClick={() => handleDayClick(dateStr)}
+                              style={inlineStyle}
+                              className={`flex flex-col h-24 rounded-lg transition-all relative p-1.5 cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-xs group ${
+                                highlightColor === 'none' 
+                                  ? 'bg-white dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/60' 
+                                  : 'border'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center ${
+                                  isToday 
+                                    ? 'bg-red-500 text-white shadow-sm' 
+                                    : 'text-zinc-400 group-hover:text-zinc-650 dark:group-hover:text-zinc-200'
+                                }`}>
+                                  {date.getDate()}
+                                </span>
+                                {highlightColor !== 'none' && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                                )}
+                              </div>
+                              <textarea
+                                onClick={e => e.stopPropagation()}
+                                className="w-full flex-grow resize-none m-0 px-1 pb-0.5 bg-transparent border-none outline-none text-[10px] text-zinc-700 dark:text-zinc-300 no-scrollbar focus:ring-0"
+                                value={calendarData[dateStr] || ''}
+                                onChange={e => handleTextareaChange(dateStr, e.target.value)}
+                                placeholder="..."
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Right Side: Sticky Floating Control Center */}
+            <aside className="lg:sticky lg:top-20 w-full lg:w-72 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm space-y-5 flex-shrink-0">
+              
+              {/* Highlight Brush Tool */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                  <Paintbrush size={13} className="text-blue-500" />
+                  <span>Highlight Brush</span>
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  <button 
+                    onClick={() => setActivePaintColor('none')}
+                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'none' 
+                        ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black' 
+                        : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-650 dark:text-zinc-300'
+                    }`}
+                    title="Brush Eraser"
+                  >
+                    Clear
+                  </button>
+                  <button 
+                    onClick={() => setActivePaintColor('green')}
+                    style={{ backgroundColor: 'rgba(83, 215, 105, 0.08)', borderColor: 'rgba(83, 215, 105, 0.3)', color: '#53D769' }}
+                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'green' ? 'ring-2 ring-[#53D769] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    }`}
+                    title="Study (Green)"
+                  >
+                    Study
+                  </button>
+                  <button 
+                    onClick={() => setActivePaintColor('red')}
+                    style={{ backgroundColor: 'rgba(252, 61, 57, 0.08)', borderColor: 'rgba(252, 61, 57, 0.3)', color: '#FC3D39' }}
+                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'red' ? 'ring-2 ring-[#FC3D39] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    }`}
+                    title="Exam (Red)"
+                  >
+                    Exam
+                  </button>
+                  <button 
+                    onClick={() => setActivePaintColor('blue')}
+                    style={{ backgroundColor: 'rgba(20, 126, 251, 0.08)', borderColor: 'rgba(20, 126, 251, 0.3)', color: '#147EFB' }}
+                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'blue' ? 'ring-2 ring-[#147EFB] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    }`}
+                    title="Revise (Blue)"
+                  >
+                    Revise
+                  </button>
+                  <button 
+                    onClick={() => setActivePaintColor('purple')}
+                    style={{ backgroundColor: 'rgba(252, 49, 88, 0.08)', borderColor: 'rgba(252, 49, 88, 0.3)', color: '#FC3158' }}
+                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'purple' ? 'ring-2 ring-[#FC3158] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    }`}
+                    title="Break (Purple)"
+                  >
+                    Rest
+                  </button>
+                </div>
+                <p className="text-[9px] text-zinc-400 italic">
+                  {activePaintColor === 'none' 
+                    ? "Clicking a day clears its highlight color." 
+                    : `Active brush: Click day cells to highlight them.`}
+                </p>
+              </div>
+
+              <hr className="border-zinc-150 dark:border-zinc-800" />
+
+              {/* Month Navigator */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                  <ChevronRight size={13} className="text-blue-500" />
+                  <span>Month Navigator</span>
+                </div>
+                <div className="flex flex-wrap gap-1 border border-zinc-100 dark:border-zinc-850/60 p-2 rounded-xl bg-zinc-50/50 dark:bg-zinc-950/20">
+                  {Object.entries(months).map(([monthKey, monthDays]) => {
+                    const firstDay = monthDays[0];
+                    const monthShort = firstDay.toLocaleString('default', { month: 'short' });
+                    const yearShort = firstDay.getFullYear().toString().slice(-2);
+                    return (
+                      <button 
+                        key={monthKey}
+                        onClick={() => {
+                          const el = document.getElementById(`month-${monthKey}`);
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="px-2 py-1 text-[10px] font-semibold rounded border border-zinc-200/50 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition cursor-pointer bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400"
+                      >
+                        {monthShort} '{yearShort}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <hr className="border-zinc-150 dark:border-zinc-800" />
+
+              {/* Study Tasks Widget */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                  <ListTodo size={13} className="text-blue-500" />
+                  <span>Study Tasks</span>
+                </div>
                 
-                return (
-                  <div key={monthKey} className="border border-zinc-200 dark:border-zinc-850 rounded overflow-hidden bg-white dark:bg-zinc-900">
-                    <div className="text-sm font-bold py-3 text-center bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-850">
-                      {monthName} {year}
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-                        <thead>
-                          <tr className="bg-zinc-100/50 dark:bg-zinc-955/50 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
-                            {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>(
-                              <th key={d} className="py-2 border-b border-zinc-200 dark:border-zinc-855 bg-zinc-50 dark:bg-zinc-900 font-bold">
-                                {d}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {weeks.map((weekItem,wi)=>(
-                            <tr key={wi}>
-                              {weekItem.map((date,di)=>(
-                                <td key={di} className="align-top border border-zinc-150 dark:border-zinc-800 h-28 relative p-0 bg-transparent">
-                                  {date && (
-                                    <div className="flex flex-col h-full">
-                                      <div className="p-1 flex justify-between">
-                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                          date.toDateString() === new Date().toDateString() 
-                                            ? 'bg-red-500 text-white' 
-                                            : 'text-zinc-400'
-                                        }`}>
-                                          {date.getDate()}
-                                        </span>
-                                      </div>
-                                      <textarea
-                                        className="w-full flex-1 resize-none m-0 px-2 pb-2 bg-transparent border-none outline-none text-[11px] text-zinc-800 dark:text-zinc-200 no-scrollbar focus:bg-zinc-50/50 dark:focus:bg-zinc-800/10"
-                                        value={calendarData[date.toISOString().slice(0,10)]||''}
-                                        onChange={e=>setCalendarData(d=>({...d,[date.toISOString().slice(0,10)]:e.target.value}))}
-                                        placeholder="..."
-                                      />
-                                    </div>
-                                  )}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                {/* Todo List */}
+                <div className="space-y-1.5 max-h-44 overflow-y-auto pr-0.5 no-scrollbar">
+                  {todoList.length === 0 ? (
+                    <p className="text-[10px] text-zinc-400 italic py-2 text-center">No tasks listed. Add one below!</p>
+                  ) : (
+                    todoList.map(todo => (
+                      <div key={todo.id} className="flex items-center justify-between bg-zinc-50/80 dark:bg-zinc-955/40 p-1.5 rounded border border-zinc-150/40 dark:border-zinc-850/60 group">
+                        <button 
+                          onClick={() => toggleTodo(todo.id)}
+                          className="flex items-center gap-1.5 text-left flex-1 text-[10px] cursor-pointer"
+                        >
+                          <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
+                            todo.completed 
+                              ? 'bg-blue-600 border-blue-600 text-white' 
+                              : 'border-zinc-300 dark:border-zinc-700 hover:border-blue-500'
+                          }`}>
+                            {todo.completed && <Check size={10} />}
+                          </span>
+                          <span className={`font-medium break-all truncate max-w-[170px] ${
+                            todo.completed ? 'line-through text-zinc-450' : 'text-zinc-700 dark:text-zinc-300'
+                          }`}>
+                            {todo.text}
+                          </span>
+                        </button>
+                        <button 
+                          onClick={() => deleteTodo(todo.id)}
+                          className="p-0.5 text-zinc-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                          title="Delete task"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Input Add Task */}
+                <div className="flex gap-1">
+                  <input 
+                    type="text"
+                    placeholder="New study task..."
+                    value={newTodoText}
+                    onChange={e => setNewTodoText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') addTodo(); }}
+                    className="flex-1 min-w-0 px-2 py-1 text-[11px] border border-zinc-200 dark:border-zinc-800 rounded bg-transparent text-zinc-850 dark:text-zinc-100 placeholder-zinc-400 focus:border-blue-500 outline-none"
+                  />
+                  <button 
+                    onClick={addTodo}
+                    className="p-1 px-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded flex items-center justify-center cursor-pointer"
+                  >
+                    <Plus size={12} />
+                  </button>
+                </div>
+              </div>
+              
+            </aside>
           </div>
         )}
 
-        {/* Date Range Selector Modal */}
-        {isCalendarRangeModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm" onClick={() => setIsCalendarRangeModalOpen(false)}>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-450 mb-4 text-left">Set Calendar Date Range</h3>
-              <div className="mb-4 space-y-1 text-left">
-                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Start Date</label>
-                <input type="date" value={calendarRangeDraft.start} onChange={e=>setCalendarRangeDraft(r=>({...r,start:e.target.value}))} className="w-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 rounded p-2 text-xs font-semibold focus:border-zinc-400 dark:focus:border-zinc-600 outline-none transition-colors" />
-              </div>
-              <div className="mb-6 space-y-1 text-left">
-                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider">End Date</label>
-                <input type="date" value={calendarRangeDraft.end} onChange={e=>setCalendarRangeDraft(r=>({...r,end:e.target.value}))} className="w-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 rounded p-2 text-xs font-semibold focus:border-zinc-400 dark:focus:border-zinc-600 outline-none transition-colors" />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button onClick={()=>setIsCalendarRangeModalOpen(false)} className="btn-notion-grey">Cancel</button>
-                <button onClick={()=>{setCalendarRange(calendarRangeDraft);setIsCalendarRangeModalOpen(false);}} className="btn-notion-blue">Save</button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Date Range Selector Modal Removed */}
       </div>
     </div>
   );

@@ -902,6 +902,23 @@ export default function App() {
             if (p >= 70) return 'B';  if (p >= 60) return 'C';
             if (p >= 50) return 'D';  return 'U';
         };
+
+        const getScoreColor = (pct: number) => {
+            if (pct >= 90) return '#53D769'; // Green
+            if (pct >= 80) return '#FECB2E'; // Yellow
+            if (pct >= 60) return '#FD9426'; // Orange
+            if (pct >= 30) return '#FC3D39'; // Red
+            return '#FC3158'; // Purple
+        };
+
+        const getGradeColor = (g: string) => {
+            if (g === 'A*') return '#53D769';
+            if (g === 'A') return '#FECB2E';
+            if (g === 'B' || g === 'C') return '#FD9426';
+            if (g === 'D') return '#FC3D39';
+            return '#FC3158';
+        };
+
         const gradeEstimate = gradeFromPct(meanPct);
 
         let predictedPct = 0;
@@ -1020,16 +1037,17 @@ export default function App() {
                                         <svg id="stats-chart-svg" width="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="overflow-visible">
                                             <defs>
                                                 <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.22" />
-                                                    <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
+                                                    <stop offset="0%" stopColor="#71717a" stopOpacity="0.15" />
+                                                    <stop offset="100%" stopColor="#71717a" stopOpacity="0.01" />
                                                 </linearGradient>
                                             </defs>
                                             {/* Grade band backgrounds */}
                                             {[
-                                                { min: 90, max: 100, c: 'rgba(22,163,74,0.07)' },
-                                                { min: 80, max: 90,  c: 'rgba(37,99,235,0.07)' },
-                                                { min: 60, max: 80,  c: 'rgba(217,119,6,0.06)' },
-                                                { min: 0,  max: 60,  c: 'rgba(220,38,38,0.05)' },
+                                                { min: 90, max: 100, c: 'rgba(83,215,105,0.07)' },
+                                                { min: 80, max: 90,  c: 'rgba(254,203,46,0.07)' },
+                                                { min: 60, max: 80,  c: 'rgba(253,148,38,0.06)' },
+                                                { min: 30, max: 60,  c: 'rgba(252,61,57,0.05)' },
+                                                { min: 0,  max: 30,  c: 'rgba(252,49,88,0.05)' },
                                             ].map(({ min, max, c }) => (
                                                 <rect key={min} x={pl} y={gY(max)} width={cW} height={gY(min) - gY(max)} fill={c} />
                                             ))}
@@ -1043,13 +1061,13 @@ export default function App() {
                                             {/* Area */}
                                             {areaPath && <path d={areaPath} fill="url(#areaGrad)" />}
                                             {/* Trend line */}
-                                            {linePath && <path d={linePath} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />}
+                                            {linePath && <path d={linePath} fill="none" stroke="#71717a" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />}
                                             {/* Mean dashed line */}
                                             {meanPct !== null && <line x1={pl} y1={gY(meanPct)} x2={pl + cW} y2={gY(meanPct)} stroke="#d97706" strokeWidth="1.2" strokeDasharray="5 3" />}
                                             {/* Data points */}
                                             {paperScores.map((ps, i) => {
                                                 const cx = gX(i); const cy = gY(ps.percentage);
-                                                const dc = ps.percentage >= 90 ? '#16a34a' : ps.percentage >= 80 ? '#2563eb' : ps.percentage >= 60 ? '#d97706' : ps.percentage >= 30 ? '#ea580c' : '#dc2626';
+                                                const dc = getScoreColor(ps.percentage);
                                                 return (
                                                     <g key={i}>
                                                         <circle cx={cx} cy={cy} r="5" fill={dc} />
@@ -1062,7 +1080,7 @@ export default function App() {
                                         </svg>
                                         <div className="flex items-center gap-4 mt-1">
                                             <div className="flex items-center gap-1.5 text-[9px] text-zinc-400 font-semibold uppercase">
-                                                <div className="w-5 h-0.5 rounded" style={{ background: '#2563eb' }} />Trend
+                                                <div className="w-5 h-0.5 rounded" style={{ background: '#71717a' }} />Trend
                                             </div>
                                             <div className="flex items-center gap-1.5 text-[9px] text-zinc-400 font-semibold uppercase">
                                                 <div className="w-5" style={{ borderTop: '1.5px dashed #d97706' }} />Mean
@@ -1079,9 +1097,9 @@ export default function App() {
                                                     <div key={label} className="flex items-center gap-2">
                                                         <span className={`text-[10px] font-semibold w-28 truncate shrink-0 ${isCurrent ? 'text-zinc-900 dark:text-zinc-100 font-bold' : 'text-zinc-400'}`}>{label}</span>
                                                         <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                                                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: isCurrent ? '#2563eb' : 'rgba(120,120,120,0.3)' }} />
+                                                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: isCurrent ? getScoreColor(pct) : 'rgba(120,120,120,0.3)' }} />
                                                         </div>
-                                                        <span className={`text-[10px] font-bold w-9 text-right shrink-0 ${isCurrent ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400'}`}>{pct.toFixed(0)}%</span>
+                                                        <span className={`text-[10px] font-bold w-9 text-right shrink-0 ${isCurrent ? '' : 'text-zinc-400'}`} style={{ color: isCurrent ? getScoreColor(pct) : undefined }}>{pct.toFixed(0)}%</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -1100,7 +1118,7 @@ export default function App() {
                                             {maxMark > 0 && attempts > 0 && <div className="text-[10px] text-zinc-400">out of {maxMark}</div>}
                                             {attempts > 0 && (
                                                 <div className="inline-block px-2 py-0.5 rounded text-[10px] font-bold mt-1"
-                                                    style={{ background: predictedPct >= 80 ? '#16a34a' : predictedPct >= 60 ? '#d97706' : '#dc2626', color: 'white' }}>
+                                                    style={{ background: getScoreColor(predictedPct), color: 'white' }}>
                                                     Grade {predictedGrade} · {predictedPct.toFixed(0)}%
                                                 </div>
                                             )}
@@ -1132,7 +1150,7 @@ export default function App() {
                                                 {(['A*','A','B','C','D','U'] as const).map(g => {
                                                     const count = paperScores.filter(p => gradeFromPct(p.percentage) === g).length;
                                                     const gpct  = attempts > 0 ? (count / attempts) * 100 : 0;
-                                                    const col   = g === 'A*' ? '#16a34a' : g === 'A' ? '#2563eb' : g === 'B' ? '#d97706' : g === 'C' ? '#ea580c' : '#dc2626';
+                                                    const col   = getGradeColor(g);
                                                     return (
                                                         <div key={g} className="flex items-center gap-1.5">
                                                             <span className="text-[9px] font-extrabold w-4 shrink-0" style={{ color: col }}>{g}</span>

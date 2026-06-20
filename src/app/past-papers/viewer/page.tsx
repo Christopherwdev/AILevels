@@ -755,7 +755,7 @@ Feedback:
                     background-color: rgba(0, 0, 0, 0.7);
                 }
                 .nav-btn-active {
-                    background-color: #2383e2;
+                    background-color: var(--primary-color);
                     color: white;
                 }
                 .nav-btn-inactive {
@@ -896,13 +896,6 @@ Feedback:
                         </button>
                     )}
 
-                    <button 
-                        onClick={triggerPrint}
-                        className="h-8 w-8 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
-                        title="Print Document"
-                    >
-                        <Printer size={13} />
-                    </button>
                     <button 
                         onClick={() => window.open(currentMode === 'doPaper' ? qpPdfUrl : msPdfUrl, '_blank')}
                         className="h-8 flex items-center gap-1 px-2.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-850 dark:hover:bg-zinc-200 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm"

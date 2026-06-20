@@ -8,16 +8,16 @@
     --card-bg: #ffffff;
     --card-border: #e9e9e6; /* Notion border */
     
-    --primary-color: #2383e2; /* Notion blue */
-    --primary-hover: #1b66b1;
+    --primary-color: #147EFB; /* iOS System Blue */
+    --primary-hover: #0c6ed9;
     --grey-bg: #f1f1ef; /* Notion grey callout/button bg */
     --grey-hover: #e9e9e7;
     
-    --color-90: #16a34a; /* Vibrant green  — ≥90% */
-    --color-80: #2563eb; /* Vibrant blue   — ≥80% */
-    --color-70: #d97706; /* Vibrant amber  — ≥60% */
-    --color-50: #ea580c; /* Vibrant orange — ≥30% */
-    --color-fail: #dc2626; /* Vibrant red  — <30% */
+    --color-90: #53D769; /* iOS System Green — ≥90% */
+    --color-80: #FECB2E; /* iOS System Yellow — ≥80% */
+    --color-70: #FD9426; /* iOS System Orange — ≥60% */
+    --color-50: #FC3D39; /* iOS System Red — ≥30% */
+    --color-fail: #FC3158; /* iOS System Pink/Purple — <30% */
   }
 
   .dark {
@@ -27,16 +27,16 @@
     --card-bg: #202020; /* Notion dark card/popover */
     --card-border: #2c2c2c;
     
-    --primary-color: #2383e2;
-    --primary-hover: #2eaadc;
+    --primary-color: #147EFB;
+    --primary-hover: #3290ff;
     --grey-bg: #2c2c2c;
     --grey-hover: #373737;
     
-    --color-90: #22c55e; /* Brighter green for dark canvas */
-    --color-80: #3b82f6; /* Brighter blue for dark canvas */
-    --color-70: #f59e0b; /* Brighter amber for dark canvas */
-    --color-50: #f97316; /* Brighter orange for dark canvas */
-    --color-fail: #ef4444; /* Brighter red for dark canvas */
+    --color-90: #62df77; /* Slightly brighter iOS Green */
+    --color-80: #ffd244; /* Slightly brighter iOS Yellow */
+    --color-70: #fe9f3f; /* Slightly brighter iOS Orange */
+    --color-50: #ff524f; /* Slightly brighter iOS Red */
+    --color-fail: #fa5c83; /* Slightly brighter iOS Pink/Purple */
   }
 
   body {
