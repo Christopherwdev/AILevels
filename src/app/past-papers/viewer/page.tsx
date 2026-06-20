@@ -152,7 +152,7 @@ const getPdfUrl = (type: 'qp' | 'ms', currentPaperData: PaperData): string => {
         ? `${year}/${year} ${abbreviatedMonth}`
         : `${year} ${abbreviatedMonth}`;
 
-    return `${BASE_PDF_URL}/PastPapers/${mappedSubject}/${yearMonthFolder}/${folder}/${filenameBase}${codePart}-${fullMonth}${year}.pdf`;
+    return `${BASE_PDF_URL}/${mappedSubject}/${yearMonthFolder}/${folder}/${filenameBase}${codePart}-${fullMonth}${year}.pdf`;
 };
 
 const getAudioUrl = (series: string, year: string, language: string, paper: string): string => {
@@ -160,7 +160,7 @@ const getAudioUrl = (series: string, year: string, language: string, paper: stri
     const fullMonth = getFullMonthName(series);
     const paperNumber = paper.replace(/\s/g, '');
 
-    return `${BASE_PDF_URL}/PastPapers/Chinese/${year} ${abbreviatedMonth}/Listening-Examinations-MP3/Recording-${paperNumber}(${language})-${fullMonth}${year}.mp3`;
+    return `${BASE_PDF_URL}/Chinese/${year} ${abbreviatedMonth}/Listening-Examinations-MP3/Recording-${paperNumber}(${language})-${fullMonth}${year}.mp3`;
 };
 
 function ViewerContent() {
@@ -545,7 +545,7 @@ Feedback:
                             </div>
                             <button
                                 onClick={removeUploadedPdf}
-                                className="text-blue-650 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 text-xs font-semibold"
+                                className="text-blue-650 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 text-xs font-semibold cursor-pointer"
                             >
                                 Show Original Paper
                             </button>
@@ -554,21 +554,21 @@ Feedback:
                     
                     {currentMode === 'reviewPaper' && currentLayout === 'splitScreen' && showWrittenAnswersInReview ? (
                         <div className="w-full h-full flex flex-col bg-white dark:bg-zinc-900">
-                            <div className="flex border-b border-zinc-200 dark:border-zinc-800 items-center justify-between px-4 py-2.5">
-                                <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                            <div className="flex border-b border-zinc-200 dark:border-zinc-800/80 items-center justify-between px-4 py-2 bg-zinc-50/50 dark:bg-zinc-950/10">
+                                <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                                     <Edit3 size={13} className="text-blue-500" />
                                     Your Answers
                                 </div>
                                 <button
                                     onClick={() => setWrittenAnswers('')}
-                                    className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded-md transition-colors"
+                                    className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded-md transition-colors cursor-pointer"
                                 >
                                     Clear Notepad
                                 </button>
                             </div>
-                            <div className="flex-1 p-4 bg-zinc-50 dark:bg-zinc-950">
+                            <div className="flex-grow bg-white dark:bg-zinc-900">
                                 <textarea 
-                                    className="w-full h-full p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-900 dark:text-zinc-100 font-sans"
+                                    className="w-full h-full p-4 resize-none focus:outline-none border-0 focus:ring-0 bg-transparent dark:text-zinc-100 font-sans"
                                     placeholder="Write your answers here..."
                                     value={writtenAnswers}
                                     onChange={handleWrittenAnswersChange}
@@ -593,7 +593,7 @@ Feedback:
                             <div className="flex border-b border-zinc-200 dark:border-zinc-800">
                                 <button
                                     onClick={() => setActiveTab('writing')}
-                                    className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all ${
+                                    className={`flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
                                         activeTab === 'writing'
                                             ? 'text-blue-600 border-blue-600 bg-blue-50/20 dark:text-blue-400 dark:border-blue-500 dark:bg-blue-950/10'
                                             : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:text-zinc-800 dark:hover:text-zinc-200'
@@ -604,7 +604,7 @@ Feedback:
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('upload')}
-                                    className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all ${
+                                    className={`flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
                                         activeTab === 'upload'
                                             ? 'text-blue-600 border-blue-600 bg-blue-50/20 dark:text-blue-400 dark:border-blue-500 dark:bg-blue-950/10'
                                             : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:text-zinc-800 dark:hover:text-zinc-200'
@@ -618,10 +618,10 @@ Feedback:
                             {/* Tab Content */}
                             <div className="flex-1 overflow-hidden">
                                 {activeTab === 'writing' && (
-                                    <div className="h-full p-4 bg-zinc-50 dark:bg-zinc-950 flex flex-col gap-3">
-                                        <div className="flex justify-between items-center">
+                                    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
+                                        <div className="flex justify-between items-center px-4 py-2 border-b border-zinc-150 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-950/10">
                                             <div className="flex items-center gap-2">
-                                                <h3 className="text-xs font-bold text-zinc-650 dark:text-zinc-400">
+                                                <h3 className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
                                                     Draft Answers
                                                 </h3>
                                                 {showSaveIndicator && (
@@ -632,13 +632,13 @@ Feedback:
                                             </div>
                                             <button
                                                 onClick={() => setWrittenAnswers('')}
-                                                className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded-md transition-colors"
+                                                className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-955/20 dark:text-red-400 rounded-md transition-colors cursor-pointer"
                                             >
                                                 Clear
                                             </button>
                                         </div>
                                         <textarea 
-                                            className="flex-grow p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-900 dark:text-zinc-100 font-sans"
+                                            className="flex-grow p-4 resize-none focus:outline-none border-0 focus:ring-0 bg-transparent dark:text-zinc-100 font-sans"
                                             placeholder="Type or format your answers here..."
                                             value={writtenAnswers}
                                             onChange={handleWrittenAnswersChange}
@@ -647,18 +647,18 @@ Feedback:
                                 )}
 
                                 {activeTab === 'upload' && (
-                                    <div className="h-full p-4 bg-zinc-50 dark:bg-zinc-950 overflow-y-auto">
+                                    <div className="h-full p-4 bg-zinc-50/50 dark:bg-zinc-950/10 overflow-y-auto">
                                         {!uploadedPdfUrl ? (
-                                            <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded-xl p-8 text-center min-h-[300px]">
-                                                <Upload size={32} className="text-zinc-400 dark:text-zinc-600 mb-3" />
-                                                <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mb-1">
+                                            <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 rounded-xl p-6 text-center min-h-[260px]">
+                                                <Upload size={28} className="text-zinc-400 dark:text-zinc-600 mb-2" />
+                                                <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">
                                                     Upload Completed PDF
                                                 </h4>
-                                                <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xs mb-5">
+                                                <p className="text-[11px] text-zinc-500 dark:text-zinc-450 max-w-xs mb-3.5 leading-normal">
                                                     Upload a PDF of your handwritten work from GoodNotes, Notability, or standard scans to grade with AI.
                                                 </p>
-                                                <label className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
-                                                    <FileText size={13} />
+                                                <label className="cursor-pointer px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
+                                                    <FileText size={12} />
                                                     Select PDF File
                                                     <input
                                                         type="file"
@@ -669,52 +669,52 @@ Feedback:
                                                 </label>
                                             </div>
                                         ) : (
-                                            <div className="space-y-4">
-                                                <div className="flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-xl">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-red-50 dark:bg-red-950/20 text-red-500 rounded-lg">
-                                                            <FileText size={20} />
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="p-1.5 bg-red-50 dark:bg-red-950/20 text-red-500 rounded-lg">
+                                                            <FileText size={16} />
                                                         </div>
                                                         <div className="flex flex-col text-left">
-                                                            <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Completed PDF Loaded</span>
+                                                            <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100">Completed PDF Loaded</span>
                                                             <span className="text-[10px] text-zinc-400">Ready for automated grading</span>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-1.5">
                                                         <button
                                                             onClick={startAiGrading}
                                                             disabled={isAiGrading}
-                                                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                                                            className="px-2.5 py-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                                                         >
                                                             {isAiGrading ? (
                                                                 <>
-                                                                    <Loader2 size={12} className="animate-spin" />
+                                                                    <Loader2 size={10} className="animate-spin" />
                                                                     Grading...
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <Bot size={13} />
+                                                                    <Bot size={11} />
                                                                     AI Grade
                                                                 </>
                                                             )}
                                                         </button>
                                                         <button
                                                             onClick={removeUploadedPdf}
-                                                            className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-955/20 dark:text-red-400 rounded-lg transition-colors"
+                                                            className="p-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-955/20 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
                                                             title="Delete Upload"
                                                         >
-                                                            <Trash2 size={14} />
+                                                            <Trash2 size={12} />
                                                         </button>
                                                     </div>
                                                 </div>
                                                 
                                                 {aiGrade && (
-                                                    <div className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-3 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                                        <h5 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 border-b border-zinc-100 dark:border-zinc-800 pb-2">
-                                                            <Bot className="text-green-600" size={14} />
+                                                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                                        <h5 className="font-bold text-[11px] text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 border-b border-zinc-150 dark:border-zinc-800 pb-1.5">
+                                                            <Bot className="text-green-600" size={13} />
                                                             AI Assessment Summary
                                                         </h5>
-                                                        <pre className="text-xs text-zinc-700 dark:text-zinc-300 font-sans whitespace-pre-wrap leading-relaxed">
+                                                        <pre className="text-[11px] text-zinc-750 dark:text-zinc-300 font-sans whitespace-pre-wrap leading-relaxed">
                                                             {aiGrade}
                                                         </pre>
                                                     </div>
@@ -772,19 +772,19 @@ Feedback:
             </style>
 
             {/* Top Navbar */}
-            <header className="h-14 bg-white dark:bg-black border-b border-zinc-200 dark:border-zinc-800 px-4 flex justify-between items-center sticky top-0 z-50 flex-shrink-0">
+            <header className="h-12 bg-white dark:bg-black border-b border-zinc-200 dark:border-zinc-800 px-4 flex justify-between items-center sticky top-0 z-50 flex-shrink-0">
                 {/* Header Left */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <button 
                         onClick={() => window.close()} 
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-xs font-bold transition cursor-pointer text-zinc-700 dark:text-zinc-300"
+                        className="flex items-center gap-1 px-2.5 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-xs font-bold transition cursor-pointer text-zinc-700 dark:text-zinc-300 h-8"
                     >
                         <ArrowLeft size={13} />
                         Exit
                     </button>
                     <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden sm:block"></div>
                     <div className="flex flex-col hidden sm:flex">
-                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider leading-none">
+                        <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider leading-none">
                             {currentMode === 'doPaper' ? 'Active Exam Sitting' : 'Evaluation Mode'}
                         </span>
                         <span className="text-xs font-bold uppercase mt-0.5 truncate max-w-[200px] text-zinc-800 dark:text-zinc-200" title={paperTitle}>
@@ -793,63 +793,63 @@ Feedback:
                     </div>
                 </div>
 
-                {/* Header Middle - Timer & View Options */}
-                <div className="flex items-center gap-4">
+                {/* Header Middle - Unified Status & Control Dock */}
+                <div className="flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5 shadow-sm h-8">
                     {/* Timer Controls */}
-                    <div className="flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-1 shadow-sm gap-2">
-                        <span className="timer-display text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300">
+                    <div className="flex items-center gap-1 px-1.5 border-r border-zinc-200 dark:border-zinc-800 h-full">
+                        <span className="timer-display text-xs font-mono font-bold text-zinc-750 dark:text-zinc-300 select-none">
                             {formatTime(timer.totalSeconds)}
                         </span>
                         <button 
                             onClick={toggleTimer}
-                            className="p-1 rounded hover:bg-zinc-250 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-300 transition-colors"
+                            className="p-1 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-350 transition-colors cursor-pointer"
                             title={timer.isRunning ? "Pause Timer" : "Start Timer"}
                         >
-                            {timer.isRunning ? <Pause size={12} /> : <Play size={12} />}
+                            {timer.isRunning ? <Pause size={11} /> : <Play size={11} />}
                         </button>
                         <button 
                             onClick={resetTimer}
-                            className="p-1 rounded hover:bg-zinc-250 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-300 transition-colors"
+                            className="p-1 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-350 transition-colors cursor-pointer"
                             title="Reset Timer"
                         >
-                            <RotateCcw size={12} />
+                            <RotateCcw size={11} />
                         </button>
                         <button 
                             onClick={openTimerSettings}
-                            className="p-1 rounded hover:bg-zinc-250 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-300 transition-colors"
+                            className="p-1 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-350 transition-colors cursor-pointer"
                             title="Timer Settings"
                         >
-                            <Settings size={12} />
+                            <Settings size={11} />
                         </button>
                     </div>
 
                     {/* Mode Toggle Controls */}
-                    <div className="flex bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-0.5 shadow-sm">
+                    <div className="flex gap-0.5 px-1 border-r border-zinc-200 dark:border-zinc-800 h-full items-center">
                         <button
                             onClick={() => handleModeSwitch('doPaper')}
-                            className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 transition-all ${
+                            className={`px-2.5 py-0.5 text-[11px] font-bold rounded-md flex items-center gap-1 transition-all h-6 cursor-pointer ${
                                 currentMode === 'doPaper' ? 'nav-btn-active' : 'nav-btn-inactive'
                             }`}
                         >
-                            <Edit3 size={11} />
+                            <Edit3 size={10} />
                             <span className="hidden md:inline">Do Paper</span>
                         </button>
                         <button
                             onClick={() => handleModeSwitch('reviewPaper')}
-                            className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 transition-all ${
+                            className={`px-2.5 py-0.5 text-[11px] font-bold rounded-md flex items-center gap-1 transition-all h-6 cursor-pointer ${
                                 currentMode === 'reviewPaper' ? 'nav-btn-active' : 'nav-btn-inactive'
                             }`}
                         >
-                            <BookOpen size={11} />
+                            <BookOpen size={10} />
                             <span className="hidden md:inline">Review</span>
                         </button>
                     </div>
 
                     {/* Layout Toggle Controls */}
-                    <div className="flex bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-0.5 shadow-sm">
+                    <div className="flex gap-0.5 px-1 h-full items-center">
                         <button
                             onClick={() => setCurrentLayout('splitScreen')}
-                            className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 transition-all ${
+                            className={`p-1 rounded-md flex items-center justify-center transition-all h-6 w-6 cursor-pointer ${
                                 currentLayout === 'splitScreen' ? 'nav-btn-active' : 'nav-btn-inactive'
                             }`}
                             title="Split Screen"
@@ -858,7 +858,7 @@ Feedback:
                         </button>
                         <button
                             onClick={() => setCurrentLayout('fullScreen')}
-                            className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 transition-all ${
+                            className={`p-1 rounded-md flex items-center justify-center transition-all h-6 w-6 cursor-pointer ${
                                 currentLayout === 'fullScreen' ? 'nav-btn-active' : 'nav-btn-inactive'
                             }`}
                             title="Full Screen View"
@@ -869,15 +869,15 @@ Feedback:
                 </div>
 
                 {/* Header Right */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     {/* Audio Overlay Button (for Chinese Listening papers) */}
                     {showAudioPlayerButton && (
                         <button
                             onClick={toggleCompactAudioPlayer}
-                            className={`p-2 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-zinc-700 dark:text-zinc-300 transition cursor-pointer ${showCompactAudioPlayer ? 'bg-zinc-100 dark:bg-zinc-900' : ''}`}
+                            className={`h-8 w-8 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-zinc-700 dark:text-zinc-300 transition cursor-pointer ${showCompactAudioPlayer ? 'bg-zinc-100 dark:bg-zinc-900' : ''}`}
                             title="Listening Audio Player"
                         >
-                            <Volume2 size={15} />
+                            <Volume2 size={13} />
                         </button>
                     )}
 
@@ -885,29 +885,29 @@ Feedback:
                     {currentMode === 'reviewPaper' && currentLayout === 'splitScreen' && (
                         <button
                             onClick={() => setShowWrittenAnswersInReview(prev => !prev)}
-                            className={`px-3 py-1.5 border rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                            className={`h-8 px-2.5 border rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
                                 showWrittenAnswersInReview 
                                     ? 'bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/20 dark:border-blue-900 dark:text-blue-400' 
                                     : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300'
                             }`}
                         >
-                            <Edit3 size={12} />
+                            <Edit3 size={11} />
                             <span>Answers Left</span>
                         </button>
                     )}
 
                     <button 
                         onClick={triggerPrint}
-                        className="p-2 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
+                        className="h-8 w-8 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
                         title="Print Document"
                     >
-                        <Printer size={15} />
+                        <Printer size={13} />
                     </button>
                     <button 
                         onClick={() => window.open(currentMode === 'doPaper' ? qpPdfUrl : msPdfUrl, '_blank')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-850 dark:hover:bg-zinc-200 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm"
+                        className="h-8 flex items-center gap-1 px-2.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-850 dark:hover:bg-zinc-200 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm"
                     >
-                        <Download size={13} />
+                        <Download size={12} />
                         Get PDF
                     </button>
                 </div>
