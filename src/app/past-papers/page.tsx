@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, X, Share2, ChevronRight, Menu } from 'lucide-react';
+import { Search, X, ChevronRight, Menu } from 'lucide-react';
 
 interface Paper {
     examBoard: string;
@@ -30,7 +30,7 @@ const papersConfig: Record<string, Record<string, Record<string, string[]>>> = {
             'Physics': ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6'],
             'Chemistry': ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6'],
             'Biology': ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6'],
-            'Math': ['P1', 'P2', 'P3', 'P4', 'M1', 'M2', 'M3', 'FP1', 'FP2', 'FP3', 'S1', 'S2', 'S3', 'D1']
+            'Mathematics': ['P1', 'P2', 'P3', 'P4', 'M1', 'M2', 'M3', 'FP1', 'FP2', 'FP3', 'S1', 'S2', 'S3', 'D1']
         },
         'IGCSE': {
             'Chinese': ['Paper 1', 'Paper 2'],
@@ -64,27 +64,27 @@ const disabledPapersConfig: DisabledPaperConfig[] = [
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Jun', year: 2020 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Jun', year: 2020 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Jun', year: 2020 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Math', paper: null, series: 'Jun', year: 2020 },
+    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Jun', year: 2020 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Jan', year: 2019 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Jan', year: 2019 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Jan', year: 2019 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Math', paper: null, series: 'Jan', year: 2019 },
+    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Jan', year: 2019 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Oct', year: 2018 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Oct', year: 2018 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Oct', year: 2018 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Math', paper: null, series: 'Oct', year: 2018 },
+    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Oct', year: 2018 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Oct', year: 2015 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Oct', year: 2015 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Oct', year: 2015 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Math', paper: null, series: 'Oct', year: 2015 },
+    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Oct', year: 2015 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Jun', year: 2014 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Jun', year: 2014 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Jun', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Math', paper: null, series: 'Jun', year: 2014 },
+    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Jun', year: 2014 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Physics', paper: null, series: 'Oct', year: 2014 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Chemistry', paper: null, series: 'Oct', year: 2014 },
     { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Biology', paper: null, series: 'Oct', year: 2014 },
-    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Math', paper: null, series: 'Oct', year: 2014 },
+    { examBoard: 'Edexcel', examLevel: 'IAL', subject: 'Mathematics', paper: null, series: 'Oct', year: 2014 },
     { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Nov", year: 2022, paper: null },
     { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Jan", year: 2021, paper: null },
     { examBoard: "Edexcel", examLevel: "IGCSE", subject: "English A", series: "Jun", year: 2020, paper: null },
@@ -136,7 +136,7 @@ const generateAllPapers = (): Paper[] => {
     Object.entries(papersConfig).forEach(([board, levels]) => {
         Object.entries(levels).forEach(([level, subjects]) => {
             if (board === 'Cambridge') {
-                const commonSubjects = ['Biology', 'Physics', 'Chemistry', 'Math'];
+                const commonSubjects = ['Biology', 'Physics', 'Chemistry', 'Mathematics'];
                 commonSubjects.forEach(subject => {
                     const paper: Paper = {
                         examBoard: board,
@@ -159,8 +159,8 @@ const generateAllPapers = (): Paper[] => {
 
                         if (level === 'IAL') {
                             seriesForThisPaper = ['Jan', 'Jun', 'Oct'];
-                            const specificMathPapers = ['FP1', 'FP2', 'FP3', 'S3', 'M3'];
-                            if (subject === 'Math' && specificMathPapers.includes(paper)) {
+                            const specificMathematicsPapers = ['FP1', 'FP2', 'FP3', 'S3', 'M3'];
+                            if (subject === 'Mathematics' && specificMathematicsPapers.includes(paper)) {
                                 seriesForThisPaper = ['Jan', 'Jun'];
                             }
                         } else if (level === 'IGCSE') {
@@ -218,7 +218,7 @@ const normalizeSubject = (subj: string) => {
 };
 
 export default function PastPapersPage() {
-    const [examLevel, setExamLevel] = useState<string>('IGCSE');
+    const [examLevel, setExamLevel] = useState<string>('IAL');
     const [examBoard, setExamBoard] = useState<string>('Edexcel');
     const [subject, setSubject] = useState<string>('');
     const [unit, setUnit] = useState<string>('');
@@ -270,7 +270,13 @@ export default function PastPapersPage() {
         const paperParam = urlParams.get('paper');
 
         if (examBoardParam) setExamBoard(examBoardParam);
-        if (examLevelParam) setExamLevel(examLevelParam);
+        if (examLevelParam) {
+            if (examLevelParam === 'IGCSE') {
+                setExamLevel('IAL');
+            } else {
+                setExamLevel(examLevelParam);
+            }
+        }
         if (subjectParam) setSubject(normalizeSubject(subjectParam));
         if (paperParam) setUnit(paperParam);
         setIsInitialLoad(false);
@@ -441,11 +447,11 @@ export default function PastPapersPage() {
                 return parseInt(b) - parseInt(a);
             })
             .map(([year, yearPapers]) => (
-                <div key={year} className="space-y-3">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-200 dark:border-zinc-800 pb-1 ml-1">
+                <div key={year} className="space-y-1.5">
+                    <h3 className="text-[20px] ml-4  text-zinc-900 dark:text-zinc-100 ml-1 mt-6 mb-2">
                         {year}
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {year === 'Coming Soon' ? (
                             yearPapers.map(paper => (
                                 <PaperCard key={paper.id} paper={paper} onAction={handlePaperAction} />
@@ -475,7 +481,7 @@ export default function PastPapersPage() {
     const unitsForCurrentSubject = subjectsForCurrentSelection[subject] || [];
 
     return (
-        <div className="flex-1 flex overflow-hidden bg-zinc-50/50 dark:bg-zinc-950/20 transition-colors duration-300">
+        <div className="h-[calc(100vh-4rem)] w-full flex overflow-hidden bg-zinc-50/50 dark:bg-zinc-950/20 transition-colors duration-300">
             {/* Mobile Sidebar Toggle Button */}
             <button 
               onClick={() => setMobileSidebarOpen(true)}
@@ -494,13 +500,13 @@ export default function PastPapersPage() {
 
             {/* Left Sidebar Filter Section */}
             <aside 
-              className={`fixed lg:relative top-0 bottom-0 left-0 w-80 max-w-[85vw] bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 p-6 z-40 lg:z-10 transition-transform duration-300 lg:translate-x-0 overflow-y-auto no-scrollbar flex flex-col gap-6 ${
+              className={`fixed lg:relative top-0 bottom-0 left-0 w-80 max-w-[85vw] bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 p-6 z-40 lg:z-10 transition-transform duration-300 lg:translate-x-0 overflow-hidden flex flex-col gap-6 ${
                 mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
               }`}
             >
-                <div className="flex justify-between items-center lg:hidden">
-                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Filter Search</span>
-                    <button className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-full cursor-pointer" onClick={() => setMobileSidebarOpen(false)}>
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Past Papers</h2>
+                    <button className="lg:hidden p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-full cursor-pointer" onClick={() => setMobileSidebarOpen(false)}>
                         <X size={16} />
                     </button>
                 </div>
@@ -532,20 +538,7 @@ export default function PastPapersPage() {
                             disabled={isKeywordSearchActive}
                         >
                             <option value="IAL">IAL</option>
-                            <option value="IGCSE">IGCSE</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">EXAM BOARD</label>
-                        <select
-                            className="w-full p-2 text-xs bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
-                            value={examBoard}
-                            onChange={(e) => handleExamBoardChange(e.target.value)}
-                            disabled={isKeywordSearchActive}
-                        >
-                            <option value="Edexcel">Edexcel</option>
-                            <option value="Cambridge">Cambridge</option>
+                            <option value="IGCSE" disabled>IGCSE (Temporarily Disabled)</option>
                         </select>
                     </div>
 
@@ -568,17 +561,17 @@ export default function PastPapersPage() {
 
                 {/* Unit/Paper Selector */}
                 {unitsForCurrentSubject.length > 0 && (
-                    <div className="flex flex-col gap-2 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-150 dark:border-zinc-800">
-                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Select Unit</label>
+                    <div className="flex flex-col gap-2 bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl">
+                        <label className="block text-[10px] font-bold text-zinc-450 dark:text-zinc-400 uppercase tracking-widest mb-1">Select Unit</label>
                         <div className="flex flex-wrap gap-2">
                             {unitsForCurrentSubject.map(u => (
                                 <button
                                   key={u}
                                   onClick={() => handleUnitChange(u === unit ? '' : u)}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer grow text-center border ${
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer grow text-center ${
                                       unit === u 
-                                          ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-black dark:border-zinc-100' 
-                                          : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-800 dark:hover:bg-zinc-850'
+                                          ? 'bg-blue-600 text-white' 
+                                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-350 hover:bg-zinc-200 dark:hover:bg-zinc-750'
                                   }`}
                                   disabled={isKeywordSearchActive}
                                 >
@@ -591,48 +584,49 @@ export default function PastPapersPage() {
             </aside>
 
             {/* Main Content View */}
-            <main className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto no-scrollbar">
-                {/* Engine Header Info Block */}
-                <div className="flex flex-col gap-4 mb-6">
-                    <div className="flex justify-between items-end">
-                        <div>
-                            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">{examBoard} Past Papers</h1>
-                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-1">
-                                {examBoard} • {examLevel} {subject && `• ${subject}`} {unit && `• ${unit}`}
-                            </p>
-                        </div>
-                        <div className="hidden lg:flex items-center gap-2">
-                            <span className="px-3 py-1 text-xs font-bold rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                                {filteredPapers.length} Papers Available
-                            </span>
+            <main className="flex-1 overflow-y-auto py-4 sm:py-6 lg:py-8 w-full">
+                <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex flex-col gap-6">
+                    {/* Engine Header Info Block */}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+                                    {examBoard} • {examLevel} {subject && `• ${subject}`} {unit && `• ${unit}`}
+                                </h1>
+                            </div>
+                            <div className="hidden lg:flex items-center gap-2">
+                                <span className="px-3 py-1 text-xs font-bold rounded border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-900">
+                                    {filteredPapers.length} Papers Available
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Papers list output */}
-                <div className="flex-1 space-y-6">
-                    {renderPapers(filteredPapers)}
-                </div>
+                    {/* Papers list output */}
+                    <div className="space-y-6">
+                        {renderPapers(filteredPapers)}
+                    </div>
 
-                {/* Copyright Disclaimer Footer */}
-                <footer className="mt-12 p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded space-y-4 text-xs max-w-4xl">
-                    <div className="text-zinc-900 dark:text-zinc-100 font-extrabold">Copyright & Compliance Notice</div>
-                    <div className="grid md:grid-cols-2 gap-4 text-[11px] text-zinc-500 leading-relaxed">
-                        <div className="space-y-1">
-                            <span className="font-bold text-zinc-700 dark:text-zinc-300">1. Ownership & Copyrights</span>
-                            <p>All past papers, mark schemes, and materials are properties of Pearson plc / Cambridge Assessment.</p>
-                            <p>unipro has no claim, credentials, or rights of ownership over these components.</p>
+                    {/* Copyright Disclaimer Footer */}
+                    <footer className="mt-12 p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded space-y-4 text-xs max-w-4xl">
+                        <div className="text-zinc-900 dark:text-zinc-100 font-extrabold">Copyright & Compliance Notice</div>
+                        <div className="grid md:grid-cols-2 gap-4 text-[11px] text-zinc-500 leading-relaxed">
+                            <div className="space-y-1">
+                                <span className="font-bold text-zinc-700 dark:text-zinc-300">1. Ownership & Copyrights</span>
+                                <p>All past papers, mark schemes, and materials are properties of Pearson plc / Cambridge Assessment.</p>
+                                <p>unipro has no claim, credentials, or rights of ownership over these components.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="font-bold text-zinc-700 dark:text-zinc-300">2. Educational Intent</span>
+                                <p>Access is restricted to registered students for academic and revision use only.</p>
+                                <p>Copying, resale, or distribution of these resources is strictly prohibited.</p>
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <span className="font-bold text-zinc-700 dark:text-zinc-300">2. Educational Intent</span>
-                            <p>Access is restricted to registered students for academic and revision use only.</p>
-                            <p>Copying, resale, or distribution of these resources is strictly prohibited.</p>
+                        <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 text-[10px] text-center text-zinc-400">
+                            © 2026 unipro | Independent revision platform | Pearson Edexcel & CIE Materials educational utilization.
                         </div>
-                    </div>
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 text-[10px] text-center text-zinc-400">
-                        © 2026 unipro | Independent revision platform | Pearson Edexcel & CIE Materials educational utilization.
-                    </div>
-                </footer>
+                    </footer>
+                </div>
             </main>
         </div>
     );
@@ -648,46 +642,42 @@ const PaperCard: React.FC<PaperCardProps> = ({ paper, onAction }) => {
     const yearDisplay = paper.year === 'N/A' ? '' : `${paper.year}`;
     const paperPartDisplay = paper.paper === 'N/A' ? '' : paper.paper;
 
+    const getSubjectColor = (subj: string) => {
+        const s = subj.toLowerCase();
+        if (s.includes('chinese')) return '#FC3D39'; // iOS Red
+        if (s.includes('physics')) return '#8944AB'; // Purple
+        if (s.includes('chemistry')) return '#FD9426'; // iOS Orange
+        if (s.includes('biology')) return '#53D769'; // iOS Green
+        if (s.includes('english')) return '#FC3158'; // Pink/Purple
+        return '#71717a'; // Muted Gray
+    };
+
+    const subjColor = getSubjectColor(paper.subject);
+
     return (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 transition-all duration-200 hover:border-zinc-400 dark:hover:border-zinc-700">
-            <div className="flex items-center gap-3">
-                <div className="flex flex-col">
-                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{paper.subject}</span>
-                    {paper.isComingSoon ? (
-                        <span className="text-[10px] text-zinc-400 uppercase mt-0.5">Coming Soon ({paper.examBoard})</span>
-                    ) : (
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-500 mt-0.5">
-                            {paperPartDisplay && (
-                                <span className="bg-zinc-100 dark:bg-zinc-850 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-800 font-bold text-zinc-700 dark:text-zinc-300">
-                                    {paperPartDisplay}
-                                </span>
-                            )}
-                            <span>{seriesDisplay}{yearDisplay}</span>
-                        </div>
-                    )}
+        <div className="flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/60 rounded-xl py-2.5 px-3 transition-all duration-200 shadow-xl shadow-zinc-900/5 group">
+            <div className="flex items-center min-w-0">
+                <div className="text-[16px] font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <span style={{ color: subjColor }} className="font-bold mr-1.5">{paper.subject}</span>
+                    <span className="font-bold text-zinc-800 dark:text-zinc-200 mr-1.5">{paperPartDisplay}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">{seriesDisplay}{yearDisplay}</span>
+                    {paper.isComingSoon && <span className="text-[10px] text-zinc-400 uppercase ml-2">(Coming Soon)</span>}
                 </div>
             </div>
 
             {!paper.isComingSoon && (
-                <div className="flex items-center gap-2 mt-3 sm:mt-0">
+                <div className="flex items-center gap-2 shrink-0 ml-4">
                     <button
                         onClick={() => onAction(paper, 'qp')}
-                        className="px-4 py-2 text-center btn-notion-blue text-xs"
+                        className="px-3 py-1.5 text-center bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[11px] font-bold transition-colors cursor-pointer"
                     >
                         Question
                     </button>
                     <button
                         onClick={() => onAction(paper, 'ms')}
-                        className="px-4 py-2 text-center btn-notion-grey text-xs"
+                        className="px-3 py-1.5 text-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md text-[11px] font-bold transition-colors cursor-pointer"
                     >
                         Answer
-                    </button>
-                    <button 
-                        onClick={() => onAction(paper, 'share')}
-                        className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
-                        title="Share link"
-                    >
-                        <Share2 size={13} />
                     </button>
                 </div>
             )}

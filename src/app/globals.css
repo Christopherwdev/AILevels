@@ -140,3 +140,15 @@
 .btn-notion-blue:hover {
   background-color: var(--primary-hover);
 }
+
+/* Remove rubberband bounce effect on all scrollable areas and elements */
+* {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+}
+
+html, body {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+}
+
