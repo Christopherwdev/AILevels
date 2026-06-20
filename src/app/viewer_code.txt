@@ -1,0 +1,121 @@
+<USER_REQUEST>
+add this viewer. change the filezilla url to something like https://ugcmwhrwsowuzbfrduba.supabase.co/storage/v1/object/public/PastPapers/English%20Language%20A/2011%20Jun/Question-paper/Questionpaper-Paper1-June2011.pdf
+
+
+
+"use client"; // This directive marks the component as a client component, allowing React hooks to be used.
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+// Define the type for paper data, matching the structure from URL parameters
+interface PaperData {
+    subject: string;
+    paper: string;
+    series: string;
+    year: string;
+    examBoard: string;
+    examLevel: string;
+    type?: string;
+}
+
+// Define the type for the timer state
+interface TimerState {
+    totalSeconds: number;
+    initialTotalSeconds: number;
+    isRunning: boolean;
+}
+
+const EXAM_MONTH_MAP: { [key: string]: string } = {
+    'Jan': 'January',
+    'Jun': 'June',
+    'Oct': 'October',
+    'Nov': 'November'
+};
+
+const IAL_SUBJECT_PREFIXES: { [key: string]: string } = {
+    'Physics': 'WPH',
+    'Chemistry': 'WCH',
+    'Biology': 'WBI'
+};
+
+const DEFAULT_DURATIONS_SECONDS = {
+    'Math': (1 * 3600) + (30 * 60), // 1 hour 30 minutes
+    'OtherSubjects': {
+        'Unit 1-2': (1 * 3600) + (30 * 60), // 1 hour 30 minutes
+        'Unit 3/6': (1 * 3600) + (20 * 60), // 1 hour 20 minutes
+        'Unit 4-5': (1 * 3600) + (45 * 60),  // 1 hour 45 minutes
+        'Chi Paper 1': (0 * 3600) + (30 * 60),
+        'Chi Paper 2': (1 * 3600) + (45 * 60),
+        'EngA Paper 1': (2 * 3600) + (15 * 60), // 2 hours 15 minutes
+        'EngA Paper 2': (1 * 3600) + (30 * 60), // 1 hour 30 minutes
+        'EngB Paper 1': (3 * 3600) + (0 * 60)  // 3 hours
+    }
+};
+
+const BASE_PDF_URL = 'https://www.aiaiblock.com/AIToLearn/PastPaperNew';
+
+const App: React.FC = () => {
+    // State variables
+    const [paperTitle, setPaperTitle] = useState<string>('Loading Paper...');
+    const [qpPdfUrl, setQpPdfUrl] = useState<string>('');
+    const [msPdfUrl, setMsPdfUrl] = useState<string>('');
+    const [currentMode, setCur
+<truncated 45215 bytes>
+ {
+                    transform: translateY(-1px);
+                }
+                
+                .upload-area {
+                    transition: all 0.3s ease-in-out;
+                }
+                
+                .upload-area:hover {
+                    border-color: #3b82f6;
+                    background-color: #f8fafc;
+                }
+                
+                .dark .upload-area:hover {
+                    border-color: #60a5fa;
+                    background-color: #374151;
+                }
+                
+                .ai-grade-panel {
+                    animation: slideIn 0.3s ease-out;
+                }
+                
+                @keyframes slideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateX(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+                
+                .grading-spinner {
+                    animation: spin 1s linear infinite;
+                }
+                
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                
+                .save-indicator {
+                    animation: fadeInOut 2s ease-in-out;
+                }
+                
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateY(-10px); }
+                    20% { opacity: 1; transform: translateY(0); }
+                    80% { opacity: 1; transform: translateY(0); }
+                    100% { opacity: 0; transform: translateY(-10px); }
+                }
+                `}
+            </style>
+            {/* Top Navbar */}
+            <nav className="flex-shrink-0 bg-white dark:b
+<truncated 20593 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.
