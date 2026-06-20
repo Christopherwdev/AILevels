@@ -75,12 +75,14 @@ export default function ChatPage() {
 
     // Realtime — unique channel name, no server-side filter for reliability
     const channelName = `chat-room-${activeRoom}-${Date.now()}`;
+    console.log(`Subscribing to realtime channel: ${channelName}`);
     const channel = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
         (payload) => {
+          console.log('Realtime INSERT event received:', payload);
           const newMsg = payload.new as ChatMessage;
           if (newMsg.room === activeRoom) {
             setMessages(prev => {
@@ -91,9 +93,16 @@ export default function ChatPage() {
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) {
+          console.error(`Realtime subscription error for ${channelName}:`, err);
+        } else {
+          console.log(`Realtime subscription status for ${channelName}:`, status);
+        }
+      });
 
     return () => {
+      console.log(`Unsubscribing from realtime channel: ${channelName}`);
       supabase.removeChannel(channel);
     };
   }, [userId, activeRoom, supabase]);
