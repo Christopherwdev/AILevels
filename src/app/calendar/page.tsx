@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { Settings, Paintbrush, ChevronRight, ListTodo, Check, Plus, Trash2 } from 'lucide-react';
+import { Paintbrush, ListTodo, Check, Plus, Trash2 } from 'lucide-react';
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -20,8 +20,8 @@ export default function CalendarPage() {
   });
 
   const [calendarData, setCalendarData] = useState<Record<string, string>>({});
-  const [calendarHighlights, setCalendarHighlights] = useState<Record<string, 'green' | 'red' | 'blue' | 'purple' | 'none'>>({});
-  const [activePaintColor, setActivePaintColor] = useState<'green' | 'red' | 'blue' | 'purple' | 'none'>('none');
+  const [calendarHighlights, setCalendarHighlights] = useState<Record<string, 'green' | 'red' | 'blue' | 'yellow' | 'none'>>({});
+  const [activePaintColor, setActivePaintColor] = useState<'green' | 'red' | 'blue' | 'yellow' | 'none'>('none');
   const [todoList, setTodoList] = useState<{ id: string; text: string; completed: boolean }[]>([]);
   const [newTodoText, setNewTodoText] = useState('');
   const [currentVisibleMonth, setCurrentVisibleMonth] = useState<string>('');
@@ -214,7 +214,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-955 text-zinc-900 dark:text-zinc-100 flex flex-col p-4 sm:p-6 lg:p-8">
+    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-955 text-zinc-900 dark:text-zinc-100 flex flex-col p-0 sm:p-6 lg:p-0">
       <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col min-h-0">
         {/* Top title text removed */}
 
@@ -243,11 +243,11 @@ export default function CalendarPage() {
                   
                   return (
                     <div id={`month-${monthKey}`} key={monthKey} className="space-y-3 scroll-mt-6">
-                      <h2 className="text-xs font-bold text-zinc-450 dark:text-zinc-400 uppercase tracking-wider pl-1">
+                      <h2 className="text-2xl font-bold text-zinc-450 dark:text-zinc-400 uppercase tracking-wider pl-1">
                         {monthName} {year}
                       </h2>
                       
-                      <div className="grid grid-cols-7 gap-1 bg-zinc-150/60 dark:bg-zinc-900/60 border border-zinc-200/40 dark:border-zinc-800/40 rounded-xl p-1 shadow-sm">
+                      <div className="grid grid-cols-7 gap-1 bg-zinc-150/60 dark:bg-zinc-900/60  rounded-xl p-1">
                         {/* Day Names Header */}
                         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                           <div key={d} className="text-center py-1 text-[9px] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
@@ -266,16 +266,18 @@ export default function CalendarPage() {
                           const dateStr = date.toISOString().slice(0, 10);
                           const highlightColor = calendarHighlights[dateStr] || 'none';
                           
-                          // Color mapping style object using exact Apple brand colors
+                          // Color mapping – solid background, white text, no border
+                          const HIGHLIGHT_COLORS: Record<string, string> = {
+                            green: '#53D769',
+                            red: '#FC3D39',
+                            blue: '#147EFB',
+                            yellow: '#FFCC00',
+                          };
+                          
                           let inlineStyle: React.CSSProperties = {};
-                          if (highlightColor === 'green') {
-                            inlineStyle = { backgroundColor: 'rgba(83, 215, 105, 0.07)', borderColor: 'rgba(83, 215, 105, 0.35)', color: '#53D769' };
-                          } else if (highlightColor === 'red') {
-                            inlineStyle = { backgroundColor: 'rgba(252, 61, 57, 0.07)', borderColor: 'rgba(252, 61, 57, 0.35)', color: '#FC3D39' };
-                          } else if (highlightColor === 'blue') {
-                            inlineStyle = { backgroundColor: 'rgba(20, 126, 251, 0.07)', borderColor: 'rgba(20, 126, 251, 0.35)', color: '#147EFB' };
-                          } else if (highlightColor === 'purple') {
-                            inlineStyle = { backgroundColor: 'rgba(252, 49, 88, 0.07)', borderColor: 'rgba(252, 49, 88, 0.35)', color: '#FC3158' };
+                          const solidColor = HIGHLIGHT_COLORS[highlightColor];
+                          if (solidColor) {
+                            inlineStyle = { backgroundColor: solidColor, borderColor: 'transparent', color: '#fff' };
                           }
                           
                           const isToday = date.toDateString() === new Date().toDateString();
@@ -286,30 +288,39 @@ export default function CalendarPage() {
                               id={isToday ? "today-cell" : undefined}
                               onClick={() => handleDayClick(dateStr)}
                               style={inlineStyle}
-                              className={`flex flex-col h-24 rounded-lg transition-all relative p-1.5 cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-xs group ${
+                              className={`flex flex-col h-24 rounded-lg transition-all relative p-1.5 cursor-pointer group ${
                                 highlightColor === 'none' 
-                                  ? 'bg-white dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/60' 
-                                  : 'border'
+                                  ? 'bg-white dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-xs' 
+                                  : 'border-0'
                               }`}
                             >
                               <div className="flex justify-between items-center mb-0.5">
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center ${
-                                  isToday 
-                                    ? 'bg-red-500 text-white shadow-sm' 
-                                    : 'text-zinc-400 group-hover:text-zinc-650 dark:group-hover:text-zinc-200'
-                                }`}>
+                                <span 
+                                  className={`text-[13px] font-bold px-1 py-0 rounded-md mb-1 flex items-center justify-center ${
+                                    isToday && solidColor
+                                      ? 'bg-white'
+                                      : isToday 
+                                        ? 'bg-red-500 text-white' 
+                                        : solidColor
+                                          ? 'text-white/90'
+                                          : 'text-zinc-400 group-hover:text-zinc-650 dark:group-hover:text-zinc-200'
+                                  }`}
+                                  style={isToday && solidColor ? { color: solidColor } : undefined}
+                                >
                                   {date.getDate()}
                                 </span>
-                                {highlightColor !== 'none' && (
+                                {/* {highlightColor !== 'none' && (
                                   <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                                )}
+                                )} */}
                               </div>
                               <textarea
                                 onClick={e => e.stopPropagation()}
-                                className="w-full flex-grow resize-none m-0 px-1 pb-0.5 bg-transparent border-none outline-none text-[10px] text-zinc-700 dark:text-zinc-300 no-scrollbar focus:ring-0"
+                                className={`w-full flex-grow resize-none m-0 px-1 pb-0.5 bg-transparent border-none outline-none text-[12px] font-bold no-scrollbar focus:ring-0 ${
+                                  solidColor ? 'text-white/90 placeholder-white/40' : 'text-zinc-700 dark:text-zinc-300'
+                                }`}
                                 value={calendarData[dateStr] || ''}
                                 onChange={e => handleTextareaChange(dateStr, e.target.value)}
-                                placeholder="..."
+                                placeholder=""
                               />
                             </div>
                           );
@@ -322,7 +333,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Right Side: Sticky Floating Control Center */}
-            <aside className="w-full lg:w-72 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm flex flex-col gap-5 flex-shrink-0 h-full overflow-y-auto no-scrollbar">
+            <aside className="w-full lg:w-72 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl p-4  flex flex-col gap-5 flex-shrink-0 h-auto overflow-y-auto no-scrollbar m-8">
               
               {/* Highlight Brush Tool */}
               <div className="space-y-2">
@@ -344,8 +355,8 @@ export default function CalendarPage() {
                   </button>
                   <button 
                     onClick={() => setActivePaintColor('green')}
-                    style={{ backgroundColor: 'rgba(83, 215, 105, 0.08)', borderColor: 'rgba(83, 215, 105, 0.3)', color: '#53D769' }}
-                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                    style={{ backgroundColor: '#53D769', color: '#fff' }}
+                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
                       activePaintColor === 'green' ? 'ring-2 ring-[#53D769] ring-offset-1 dark:ring-offset-zinc-900' : ''
                     }`}
                     title="Study (Green)"
@@ -354,8 +365,8 @@ export default function CalendarPage() {
                   </button>
                   <button 
                     onClick={() => setActivePaintColor('red')}
-                    style={{ backgroundColor: 'rgba(252, 61, 57, 0.08)', borderColor: 'rgba(252, 61, 57, 0.3)', color: '#FC3D39' }}
-                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                    style={{ backgroundColor: '#FC3D39', color: '#fff' }}
+                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
                       activePaintColor === 'red' ? 'ring-2 ring-[#FC3D39] ring-offset-1 dark:ring-offset-zinc-900' : ''
                     }`}
                     title="Exam (Red)"
@@ -364,8 +375,8 @@ export default function CalendarPage() {
                   </button>
                   <button 
                     onClick={() => setActivePaintColor('blue')}
-                    style={{ backgroundColor: 'rgba(20, 126, 251, 0.08)', borderColor: 'rgba(20, 126, 251, 0.3)', color: '#147EFB' }}
-                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                    style={{ backgroundColor: '#147EFB', color: '#fff' }}
+                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
                       activePaintColor === 'blue' ? 'ring-2 ring-[#147EFB] ring-offset-1 dark:ring-offset-zinc-900' : ''
                     }`}
                     title="Revise (Blue)"
@@ -373,53 +384,17 @@ export default function CalendarPage() {
                     Revise
                   </button>
                   <button 
-                    onClick={() => setActivePaintColor('purple')}
-                    style={{ backgroundColor: 'rgba(252, 49, 88, 0.08)', borderColor: 'rgba(252, 49, 88, 0.3)', color: '#FC3158' }}
-                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
-                      activePaintColor === 'purple' ? 'ring-2 ring-[#FC3158] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    onClick={() => setActivePaintColor('yellow')}
+                    style={{ backgroundColor: '#FFCC00', color: '#fff' }}
+                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'yellow' ? 'ring-2 ring-[#FFCC00] ring-offset-1 dark:ring-offset-zinc-900' : ''
                     }`}
-                    title="Break (Purple)"
+                    title="Rest (Yellow)"
                   >
                     Rest
                   </button>
                 </div>
-                <p className="text-[9px] text-zinc-400 italic">
-                  {activePaintColor === 'none' 
-                    ? "Clicking a day clears its highlight color." 
-                    : `Active brush: Click day cells to highlight them.`}
-                </p>
-              </div>
-
-              <hr className="border-zinc-150 dark:border-zinc-800" />
-
-              {/* Month Navigator Dropdown */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                  <ChevronRight size={13} className="text-blue-500" />
-                  <span>Month Navigator</span>
-                </div>
-                <select
-                  value={currentVisibleMonth}
-                  onChange={(e) => {
-                    const monthKey = e.target.value;
-                    setCurrentVisibleMonth(monthKey);
-                    const el = document.getElementById(`month-${monthKey}`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="w-full p-2 text-xs bg-zinc-50 dark:bg-zinc-955 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
-                >
-                  <option value="" disabled>Select Month & Year</option>
-                  {Object.entries(months).map(([monthKey, monthDays]) => {
-                    const firstDay = monthDays[0];
-                    const monthFull = firstDay.toLocaleString('default', { month: 'long' });
-                    const yearFull = firstDay.getFullYear();
-                    return (
-                      <option key={monthKey} value={monthKey}>
-                        {monthFull} {yearFull}
-                      </option>
-                    );
-                  })}
-                </select>
+                
               </div>
 
               <hr className="border-zinc-150 dark:border-zinc-800" />
@@ -430,60 +405,60 @@ export default function CalendarPage() {
                   <ListTodo size={13} className="text-blue-500" />
                   <span>Study Tasks</span>
                 </div>
-                
-                {/* Todo List */}
-                <div className="space-y-1.5 max-h-44 overflow-y-auto pr-0.5 no-scrollbar">
-                  {todoList.length === 0 ? (
-                    <p className="text-[10px] text-zinc-400 italic py-2 text-center">No tasks listed. Add one below!</p>
-                  ) : (
-                    todoList.map(todo => (
-                      <div key={todo.id} className="flex items-center justify-between bg-zinc-50/80 dark:bg-zinc-955/40 p-1.5 rounded border border-zinc-150/40 dark:border-zinc-850/60 group">
-                        <button 
-                          onClick={() => toggleTodo(todo.id)}
-                          className="flex items-center gap-1.5 text-left flex-1 text-[10px] cursor-pointer"
-                        >
-                          <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
-                            todo.completed 
-                              ? 'bg-blue-600 border-blue-600 text-white' 
-                              : 'border-zinc-300 dark:border-zinc-700 hover:border-blue-500'
-                          }`}>
-                            {todo.completed && <Check size={10} />}
-                          </span>
-                          <span className={`font-medium break-all truncate max-w-[170px] ${
-                            todo.completed ? 'line-through text-zinc-450' : 'text-zinc-700 dark:text-zinc-300'
-                          }`}>
-                            {todo.text}
-                          </span>
-                        </button>
-                        <button 
-                          onClick={() => deleteTodo(todo.id)}
-                          className="p-0.5 text-zinc-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition cursor-pointer"
-                          title="Delete task"
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Input Add Task */}
-                <div className="flex gap-1">
+                 {/* Input Add Task */}
+                <div className="flex gap-2">
                   <input 
                     type="text"
                     placeholder="New study task..."
                     value={newTodoText}
                     onChange={e => setNewTodoText(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') addTodo(); }}
-                    className="flex-1 min-w-0 px-2 py-1 text-[11px] border border-zinc-200 dark:border-zinc-800 rounded bg-transparent text-zinc-850 dark:text-zinc-100 placeholder-zinc-400 focus:border-blue-500 outline-none"
+                    className="flex-1 min-w-0 px-3 py-1.5 text-[11px] rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-blue-500 outline-none border-0"
                   />
                   <button 
                     onClick={addTodo}
-                    className="p-1 px-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded flex items-center justify-center cursor-pointer"
+                    className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center cursor-pointer transition-colors"
                   >
-                    <Plus size={12} />
+                    <Plus size={14} />
                   </button>
                 </div>
+                {/* Todo List */}
+                <div className="space-y-1 max-h-44 overflow-y-auto pr-0.5 no-scrollbar">
+                  {todoList.length === 0 ? (
+                    <p className="text-[10px] text-zinc-400 italic py-2 text-center">No tasks listed. Add one below!</p>
+                  ) : (
+                    todoList.map(todo => (
+                      <div key={todo.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40 transition-colors group">
+                        <button 
+                          onClick={() => toggleTodo(todo.id)}
+                          className="flex items-center gap-2 text-left flex-1 text-[11px] cursor-pointer"
+                        >
+                          <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                            todo.completed 
+                              ? 'bg-blue-500 text-white' 
+                              : 'bg-zinc-200 dark:bg-zinc-700 hover:bg-blue-200 dark:hover:bg-blue-900'
+                          }`}>
+                            {todo.completed && <Check size={10} />}
+                          </span>
+                          <span className={`font-medium break-all truncate max-w-[170px] ${
+                            todo.completed ? 'line-through text-zinc-400' : 'text-zinc-700 dark:text-zinc-300'
+                          }`}>
+                            {todo.text}
+                          </span>
+                        </button>
+                        <button 
+                          onClick={() => deleteTodo(todo.id)}
+                          className="p-1 text-zinc-350 hover:text-red-500 rounded-md opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                          title="Delete task"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+               
               </div>
               
             </aside>

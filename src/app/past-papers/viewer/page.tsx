@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react
 import { useSearchParams } from 'next/navigation';
 import { 
   ArrowLeft, Printer, Download, Play, Pause, RotateCcw, Settings, 
-  Columns, Maximize2, BookOpen, Edit3, Volume2, Trash2, Upload, 
-  Bot, FileText, CheckCircle, Menu, X, Loader2 
+  Columns, Maximize2, BookOpen, Edit3, Volume2, 
+  CheckCircle, Menu, X 
 } from 'lucide-react';
 
 interface PaperData {
@@ -185,12 +185,6 @@ function ViewerContent() {
     const [audioLanguage, setAudioLanguage] = useState<string>('Mandarin');
     const audioPlayerRef = useRef<HTMLAudioElement>(null);
 
-    // New state for tabbed interface
-    const [activeTab, setActiveTab] = useState<'writing' | 'upload'>('writing');
-    const [uploadedPdfUrl, setUploadedPdfUrl] = useState<string>('');
-    const [isAiGrading, setIsAiGrading] = useState<boolean>(false);
-    const [aiGrade, setAiGrade] = useState<string>('');
-    const [isUploading, setIsUploading] = useState<boolean>(false);
     const [writtenAnswers, setWrittenAnswers] = useState<string>('');
     const [showWrittenAnswersInReview, setShowWrittenAnswersInReview] = useState<boolean>(false);
     const [showSaveIndicator, setShowSaveIndicator] = useState<boolean>(false);
@@ -337,26 +331,9 @@ function ViewerContent() {
         }
     }, [paperData]);
 
-    const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file && file.type === 'application/pdf') {
-            setIsUploading(true);
-            const url = URL.createObjectURL(file);
-            setUploadedPdfUrl(url);
-            setIsUploading(false);
-        }
-    }, []);
-
     const handleWrittenAnswersChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setWrittenAnswers(event.target.value);
     }, []);
-
-    const removeUploadedPdf = useCallback(() => {
-        if (uploadedPdfUrl) {
-            URL.revokeObjectURL(uploadedPdfUrl);
-            setUploadedPdfUrl('');
-        }
-    }, [uploadedPdfUrl]);
 
     const toggleMobileOptions = useCallback(() => {
         setShowMobileOptions(prev => !prev);
@@ -369,26 +346,6 @@ function ViewerContent() {
     const checkMobileSize = useCallback(() => {
         setIsMobile(window.innerWidth < 768);
     }, []);
-
-    const startAiGrading = useCallback(async () => {
-        if (!uploadedPdfUrl) return;
-        
-        setIsAiGrading(true);
-        setAiGrade('');
-        
-        setTimeout(() => {
-            const mockGrade = `Grade: A (85/100)
-            
-Feedback:
-- Excellent understanding of concepts
-- Clear and logical explanations
-- Minor calculation errors in questions 3 and 7
-- Good use of mathematical notation
-- Well-structured answers with proper working shown`;
-            setAiGrade(mockGrade);
-            setIsAiGrading(false);
-        }, 3000);
-    }, [uploadedPdfUrl]);
 
     const triggerPrint = () => {
         try {
@@ -467,14 +424,7 @@ Feedback:
         };
     }, [timer.isRunning, timer.totalSeconds]);
 
-    // Cleanup uploaded PDF URL on unmount
-    useEffect(() => {
-        return () => {
-            if (uploadedPdfUrl) {
-                URL.revokeObjectURL(uploadedPdfUrl);
-            }
-        };
-    }, [uploadedPdfUrl]);
+
 
     // Mobile size detection effect
     useEffect(() => {
@@ -537,21 +487,6 @@ Feedback:
         return (
             <div id="content-area" className={`flex-grow overflow-hidden ${isMobile && currentLayout === 'splitScreen' ? 'flex flex-col' : 'flex'}`}>
                 <div id="qp-panel" className={qpPanelClasses}>
-                    {uploadedPdfUrl && (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-700 px-4 py-2 flex items-center justify-between z-10 relative">
-                            <div className="flex items-center text-blue-850 dark:text-blue-200 text-xs">
-                                <FileText className="mr-2 text-blue-500" size={14} />
-                                <span className="font-semibold">Showing completed paper PDF upload</span>
-                            </div>
-                            <button
-                                onClick={removeUploadedPdf}
-                                className="text-blue-650 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 text-xs font-semibold cursor-pointer"
-                            >
-                                Show Original Paper
-                            </button>
-                        </div>
-                    )}
-                    
                     {currentMode === 'reviewPaper' && currentLayout === 'splitScreen' && showWrittenAnswersInReview ? (
                         <div className="w-full h-full flex flex-col bg-white dark:bg-zinc-900">
                             <div className="flex border-b border-zinc-200 dark:border-zinc-800/80 items-center justify-between px-4 py-2 bg-zinc-50/50 dark:bg-zinc-950/10">
@@ -580,8 +515,8 @@ Feedback:
                             ref={iframeRef}
                             id="qp-iframe" 
                             className="pdf-frame w-full h-full" 
-                            src={uploadedPdfUrl || qpPdfUrl}
-                            title={uploadedPdfUrl ? "Uploaded Completed Paper" : "Question Paper"}
+                            src={qpPdfUrl}
+                            title="Question Paper"
                         ></iframe>
                     )}
                 </div>
@@ -589,141 +524,31 @@ Feedback:
                 <div id="right-panel" className={rightPanelClasses}>
                     {showAnswerTextarea && (
                         <div className="w-full h-full flex flex-col bg-white dark:bg-zinc-900">
-                            {/* Tab Navigation */}
-                            <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+                            <div className="flex justify-between items-center px-4 py-2 border-b border-zinc-150 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-950/10">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-xs font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                                        <Edit3 size={13} className="text-blue-500" />
+                                        Draft Answers
+                                    </h3>
+                                    {showSaveIndicator && (
+                                        <span className="text-[10px] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <CheckCircle size={10} /> Auto-Saved
+                                        </span>
+                                    )}
+                                </div>
                                 <button
-                                    onClick={() => setActiveTab('writing')}
-                                    className={`flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
-                                        activeTab === 'writing'
-                                            ? 'text-blue-600 border-blue-600 bg-blue-50/20 dark:text-blue-400 dark:border-blue-500 dark:bg-blue-950/10'
-                                            : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:text-zinc-800 dark:hover:text-zinc-200'
-                                    }`}
+                                    onClick={() => setWrittenAnswers('')}
+                                    className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded-md transition-colors cursor-pointer"
                                 >
-                                    <Edit3 size={13} />
-                                    Writing Notepad
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('upload')}
-                                    className={`flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
-                                        activeTab === 'upload'
-                                            ? 'text-blue-600 border-blue-600 bg-blue-50/20 dark:text-blue-400 dark:border-blue-500 dark:bg-blue-950/10'
-                                            : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:text-zinc-800 dark:hover:text-zinc-200'
-                                    }`}
-                                >
-                                    <Upload size={13} />
-                                    Upload PDF
+                                    Clear
                                 </button>
                             </div>
-
-                            {/* Tab Content */}
-                            <div className="flex-1 overflow-hidden">
-                                {activeTab === 'writing' && (
-                                    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
-                                        <div className="flex justify-between items-center px-4 py-2 border-b border-zinc-150 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-950/10">
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
-                                                    Draft Answers
-                                                </h3>
-                                                {showSaveIndicator && (
-                                                    <span className="text-[10px] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                        <CheckCircle size={10} /> Auto-Saved
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <button
-                                                onClick={() => setWrittenAnswers('')}
-                                                className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-955/20 dark:text-red-400 rounded-md transition-colors cursor-pointer"
-                                            >
-                                                Clear
-                                            </button>
-                                        </div>
-                                        <textarea 
-                                            className="flex-grow p-4 resize-none focus:outline-none border-0 focus:ring-0 bg-transparent dark:text-zinc-100 font-sans"
-                                            placeholder="Type or format your answers here..."
-                                            value={writtenAnswers}
-                                            onChange={handleWrittenAnswersChange}
-                                        />
-                                    </div>
-                                )}
-
-                                {activeTab === 'upload' && (
-                                    <div className="h-full p-4 bg-zinc-50/50 dark:bg-zinc-950/10 overflow-y-auto">
-                                        {!uploadedPdfUrl ? (
-                                            <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 rounded-xl p-6 text-center min-h-[260px]">
-                                                <Upload size={28} className="text-zinc-400 dark:text-zinc-600 mb-2" />
-                                                <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">
-                                                    Upload Completed PDF
-                                                </h4>
-                                                <p className="text-[11px] text-zinc-500 dark:text-zinc-450 max-w-xs mb-3.5 leading-normal">
-                                                    Upload a PDF of your handwritten work from GoodNotes, Notability, or standard scans to grade with AI.
-                                                </p>
-                                                <label className="cursor-pointer px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
-                                                    <FileText size={12} />
-                                                    Select PDF File
-                                                    <input
-                                                        type="file"
-                                                        accept=".pdf"
-                                                        onChange={handleFileUpload}
-                                                        className="hidden"
-                                                    />
-                                                </label>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-3">
-                                                <div className="flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className="p-1.5 bg-red-50 dark:bg-red-950/20 text-red-500 rounded-lg">
-                                                            <FileText size={16} />
-                                                        </div>
-                                                        <div className="flex flex-col text-left">
-                                                            <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100">Completed PDF Loaded</span>
-                                                            <span className="text-[10px] text-zinc-400">Ready for automated grading</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <button
-                                                            onClick={startAiGrading}
-                                                            disabled={isAiGrading}
-                                                            className="px-2.5 py-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                                                        >
-                                                            {isAiGrading ? (
-                                                                <>
-                                                                    <Loader2 size={10} className="animate-spin" />
-                                                                    Grading...
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Bot size={11} />
-                                                                    AI Grade
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                        <button
-                                                            onClick={removeUploadedPdf}
-                                                            className="p-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-955/20 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
-                                                            title="Delete Upload"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                
-                                                {aiGrade && (
-                                                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-2.5 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                                        <h5 className="font-bold text-[11px] text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 border-b border-zinc-150 dark:border-zinc-800 pb-1.5">
-                                                            <Bot className="text-green-600" size={13} />
-                                                            AI Assessment Summary
-                                                        </h5>
-                                                        <pre className="text-[11px] text-zinc-750 dark:text-zinc-300 font-sans whitespace-pre-wrap leading-relaxed">
-                                                            {aiGrade}
-                                                        </pre>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                            <textarea 
+                                className="flex-grow p-4 resize-none focus:outline-none border-0 focus:ring-0 bg-transparent dark:text-zinc-100 font-sans"
+                                placeholder="Type or format your answers here..."
+                                value={writtenAnswers}
+                                onChange={handleWrittenAnswersChange}
+                            />
                         </div>
                     )}
                     {showMsIframe && (
