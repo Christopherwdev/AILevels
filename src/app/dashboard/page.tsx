@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { disabledPapersList } from '@/utils/disabled-papers';
 import { Menu, X } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Script from 'next/script';
 
@@ -218,6 +218,7 @@ ScoreCell.displayName = 'ScoreCell';
 
 // --- Main App Component ---
 export default function App() {
+    const router = useRouter();
     const [appState, setAppState] = useState<AppStateType>(() => {
         return {
             currentMode: 'IAL',
@@ -330,6 +331,17 @@ export default function App() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
             setUserId(user.id);
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (profile?.username && /_[0-9]{4}$/.test(profile.username)) {
+                router.push('/onboarding');
+                return;
+            }
             
             const { data: scoresData } = await supabase
                 .from('dashboard_scores')

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, X, ChevronRight, Menu } from 'lucide-react';
+import { Search, X, SlidersHorizontal } from 'lucide-react';
 import { disabledPapersList } from '@/utils/disabled-papers';
 import { subjects } from '@/utils/subjects';
 
@@ -425,13 +425,15 @@ export default function PastPapersPage() {
     return (
         <div className="h-[calc(100vh-4rem)] w-full flex overflow-hidden bg-zinc-50/50 dark:bg-zinc-950/20 transition-colors duration-300">
             {/* Sidebar Toggle Button */}
-            <button 
-              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className="fixed bottom-6 left-6 p-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-955 rounded-full shadow-lg z-50 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
-              title="Open Filters"
-            >
-              {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
+            <div className="fixed bottom-6 left-6 z-[80] flex items-center justify-start pointer-events-auto">
+              <button
+                onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+                className="w-10 h-10 flex items-center justify-center bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all cursor-pointer hover:opacity-90 active:scale-95"
+                title="Open Filters"
+              >
+                {mobileSidebarOpen ? <X size={20} /> : <SlidersHorizontal size={18} />}
+              </button>
+            </div>
 
 
             {/* Left Sidebar Filter Section (Overlay style at bottom left) */}

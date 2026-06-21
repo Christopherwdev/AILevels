@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { Plus, Search, FileText } from 'lucide-react';
+import { Plus, Search, FileText, NotebookText } from 'lucide-react';
 import NoteEditor from '@/components/NoteEditor';
 
 interface Note {
@@ -24,6 +24,9 @@ export default function NotesPage() {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Mobile sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Auth & Initial Fetch
   useEffect(() => {
@@ -120,6 +123,7 @@ export default function NotesPage() {
     if (data) {
       setNotes(prev => [data, ...prev]);
       setActiveNoteId(data.id);
+      setIsSidebarOpen(false); // close sidebar after creating on mobile
     }
   };
 
@@ -168,10 +172,96 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col md:flex-row bg-white dark:bg-zinc-950 overflow-hidden font-sans">
-      
-      {/* LEFT PANEL: LIST OF NOTES */}
-      <aside className="w-full md:w-80 shrink-0 flex flex-col mt-4 px-0">
+    <div className="h-[calc(100vh-4rem)] flex flex-col md:flex-row bg-white dark:bg-zinc-950 overflow-hidden font-sans relative">
+
+      {/* ── MOBILE: Backdrop ── */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── MOBILE: Slide-in Sidebar ── */}
+      <aside
+        className={`
+          fixed top-16 left-0 bottom-0 z-40 w-72 flex flex-col
+          bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800
+          shadow-2xl transition-transform duration-300 ease-in-out
+          md:hidden
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        {/* Sidebar header */}
+        <div className="p-4 flex justify-between items-center gap-3 border-b border-zinc-100 dark:border-zinc-800">
+          <h2 className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 uppercase">Study Notes</h2>
+          <button
+            onClick={handleCreateNote}
+            className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[10px] font-black rounded hover:opacity-90 transition cursor-pointer uppercase tracking-wider"
+          >
+            <Plus size={12} />
+            <span>New</span>
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 relative">
+          <input
+            type="text"
+            placeholder="Search notes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-full text-xs bg-white dark:bg-zinc-900/50 dark:text-zinc-100 outline-none focus:border-zinc-450"
+          />
+          <Search className="absolute left-[24px] top-[22px] text-zinc-400" size={14} />
+        </div>
+
+        {/* Notes list */}
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          {filteredNotes.length === 0 ? (
+            <div className="text-center py-12 text-zinc-400 text-xs">No notes found.</div>
+          ) : (
+            filteredNotes.map(n => (
+              <button
+                key={n.id}
+                onClick={() => {
+                  setActiveNoteId(n.id);
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex flex-col p-4 py-3 text-left transition-all border-b border-zinc-100 dark:border-zinc-800/60 cursor-pointer ${
+                  activeNoteId === n.id
+                    ? 'bg-zinc-100 dark:bg-zinc-900 font-extrabold'
+                    : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/30'
+                }`}
+              >
+                <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate w-full">
+                  {n.title || 'Untitled Note'}
+                </span>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate w-full mt-0.5">
+                  {n.content ? n.content.replace(/<[^>]*>/g, '').substring(0, 50) : 'No content'}
+                </p>
+                <span className="text-[9px] text-zinc-400 font-semibold mt-1.5 uppercase tracking-wide select-none">
+                  {new Date(n.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      </aside>
+
+      {/* ── MOBILE: Toggle Button (hidden when sidebar is open) ── */}
+      {!isSidebarOpen && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="md:hidden fixed bottom-6 left-6 z-50 w-10 h-10 flex items-center justify-center bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all cursor-pointer hover:opacity-90 active:scale-95"
+          title="Open notes list"
+        >
+          <NotebookText size={20} />
+        </button>
+      )}
+
+      {/* ── DESKTOP: Left Panel ── */}
+      <aside className="hidden md:flex w-80 shrink-0 flex-col mt-4 px-0">
         {/* Header with "+ New Note" */}
         <div className="p-0 pb-4 ml-4 flex justify-between items-center gap-3 pr-0">
           <h2 className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 uppercase">Study Notes</h2>

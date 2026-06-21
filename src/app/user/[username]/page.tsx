@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { ensureUserProfile, DEFAULT_AVATARS, UserProfile } from '@/utils/supabase/profile-helper';
+import Avatar from '@/components/Avatar';
 
 interface PageProps {
   params: Promise<{ username: string }>;
@@ -186,25 +187,7 @@ export default function UserProfilePage({ params }: PageProps) {
   };
 
   const renderAvatar = (urlOrGradient: string, sizeClass = "h-20 w-20 sm:h-24 sm:w-24") => {
-    const isGradient = urlOrGradient && urlOrGradient.startsWith('linear-gradient');
-    if (isGradient) {
-      return (
-        <div 
-          className={`${sizeClass} rounded-full border border-zinc-200 dark:border-zinc-800 shadow-sm shrink-0`}
-          style={{ background: urlOrGradient }}
-        />
-      );
-    }
-    return (
-      <img 
-        src={urlOrGradient || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150'} 
-        alt="Avatar"
-        className={`${sizeClass} rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shadow-sm shrink-0`}
-        onError={(e) => {
-          e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150';
-        }}
-      />
-    );
+    return <Avatar avatarUrl={urlOrGradient} username={username} sizeClass={sizeClass} textSizeClass="text-2xl font-bold" />;
   };
 
   // Helper to color codes mock cards

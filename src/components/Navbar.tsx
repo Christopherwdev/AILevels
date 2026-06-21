@@ -8,6 +8,7 @@ import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Setti
 import { ensureUserProfile } from '@/utils/supabase/profile-helper';
 import { subjects, getSubjectIcon } from '@/utils/subjects';
 import { useOverlay } from '@/context/OverlayContext';
+import Avatar from '@/components/Avatar';
 
 interface NavbarProps {
   userEmail: string | null;
@@ -123,32 +124,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
   if (isEmbedded) return null;
 
   const renderAvatar = (urlOrGradient: string | null, sizeClass = "h-6 w-6") => {
-    if (!urlOrGradient) {
-      return (
-        <div className={`${sizeClass} rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-650 dark:text-zinc-400 border border-black shrink-0`}>
-          {username ? username.charAt(0).toUpperCase() : 'U'}
-        </div>
-      );
-    }
-    const isGradient = urlOrGradient.startsWith('linear-gradient');
-    if (isGradient) {
-      return (
-        <div 
-          className={`${sizeClass} rounded-full border border-black  shrink-0`}
-          style={{ background: urlOrGradient }}
-        />
-      );
-    }
-    return (
-      <img 
-        src={urlOrGradient} 
-        alt="Avatar"
-        className={`${sizeClass} rounded-full object-cover border border-zinc-200 dark:border-zinc-850 shadow-sm shrink-0`}
-        onError={(e) => {
-          e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150';
-        }}
-      />
-    );
+    return <Avatar avatarUrl={urlOrGradient} username={username} sizeClass={sizeClass} textSizeClass="text-[10px] font-bold" />;
   };
 
   if (pathname && pathname.startsWith('/past-papers/viewer')) {
@@ -184,7 +160,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
 
             {/* Navigation Links (Visible only when logged in) */}
             {userEmail && (
-              <div className="hidden md:flex items-center gap-6">
+              <div className="hidden lg:flex items-center gap-6">
                 <Link href="/dashboard" className={navLinkClass('/dashboard')}>
                   <Layout size={14} />
                   Dashboard
@@ -278,7 +254,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
             {userEmail ? (
               <div className="flex items-center gap-3">
                 {/* Mobile Navigation Dropdown/Buttons */}
-                <div className="md:hidden flex gap-1">
+                <div className="lg:hidden flex gap-1">
                   <Link href="/dashboard" className={mobileLinkClass('/dashboard')}>
                     <Layout size={16} />
                   </Link>

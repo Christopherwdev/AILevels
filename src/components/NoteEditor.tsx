@@ -7,9 +7,11 @@ import { Bold, Italic, Underline, MoreVertical, Copy, Plus, FileText, Trash2 } f
 interface NoteEditorProps {
   noteId: string;
   onDelete?: () => void;
+  toolbarPrefix?: React.ReactNode;
+  toolbarSuffix?: React.ReactNode;
 }
 
-export default function NoteEditor({ noteId, onDelete }: NoteEditorProps) {
+export default function NoteEditor({ noteId, onDelete, toolbarPrefix, toolbarSuffix }: NoteEditorProps) {
   const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [editorTitle, setEditorTitle] = useState('');
@@ -17,6 +19,29 @@ export default function NoteEditor({ noteId, onDelete }: NoteEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
+  const toolbarScrollRef = useRef<HTMLDivElement>(null);
+
+  // Native capture-phase touch scroll for the toolbar
+  // (React synthetic events don't reliably fire when touch starts on overflow:hidden children)
+  useEffect(() => {
+    const el = toolbarScrollRef.current;
+    if (!el) return;
+    let startX = 0;
+    let startScrollLeft = 0;
+    const onStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startScrollLeft = el.scrollLeft;
+    };
+    const onMove = (e: TouchEvent) => {
+      el.scrollLeft = startScrollLeft + (startX - e.touches[0].clientX);
+    };
+    el.addEventListener('touchstart', onStart, { passive: true, capture: true });
+    el.addEventListener('touchmove', onMove, { passive: true, capture: true });
+    return () => {
+      el.removeEventListener('touchstart', onStart, { capture: true } as EventListenerOptions);
+      el.removeEventListener('touchmove', onMove, { capture: true } as EventListenerOptions);
+    };
+  }, []);
 
   // Authenticate user
   useEffect(() => {
@@ -38,7 +63,7 @@ export default function NoteEditor({ noteId, onDelete }: NoteEditorProps) {
         .select('*')
         .eq('id', noteId)
         .maybeSingle();
-      
+
       if (data) {
         setEditorTitle(data.title || '');
         setEditorContent(data.content || '');
@@ -78,11 +103,11 @@ export default function NoteEditor({ noteId, onDelete }: NoteEditorProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const channel = new BroadcastChannel('notes-sync-channel');
-    
+
     channel.onmessage = (event) => {
       if (!event.data) return;
       const { type, noteId: msgNoteId, title, content } = event.data;
-      
+
       if (type === 'NOTE_UPDATED' && msgNoteId === noteId) {
         setEditorTitle(title);
         setEditorContent(content);
@@ -240,135 +265,154 @@ export default function NoteEditor({ noteId, onDelete }: NoteEditorProps) {
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-zinc-950 h-full">
       {/* Editor Toolbar Header */}
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center gap-2 bg-zinc-50/50 dark:bg-zinc-900/10 z-10">
-        
-        {/* Style Controls (B, I, U) */}
-        <div className="flex items-center rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyTextFormat('bold')}
-            className="p-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer font-bold"
-            title="Bold"
-          >
-            <Bold size={13} />
-          </button>
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyTextFormat('italic')}
-            className="p-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
-            title="Italic"
-          >
-            <Italic size={13} />
-          </button>
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyTextFormat('underline')}
-            className="p-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
-            title="Underline"
-          >
-            <Underline size={13} />
-          </button>
-        </div>
+      <div className="border-b border-zinc-200 dark:border-zinc-800 flex items-center bg-zinc-50/50 dark:bg-zinc-900/10 z-10 min-w-0">
 
-        {/* Highlighter Color Options */}
-        <div className="flex items-center gap-1.5 px-2">
-          {(['grey', 'gold', 'green', 'red', 'blue'] as const).map(color => (
-            <button
-              key={color}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => applyTextHighlight(color)}
-              className={`w-4 h-4 rounded-full cursor-pointer transition-all hover:scale-110 ${getNoteCircleClass(color)}`}
-              title={`Highlight ${color}`}
-            />
-          ))}
-        </div>
+        {/* ── Scrollable region: prefix + tools + options ── */}
+        <div
+          ref={toolbarScrollRef}
+          className="flex items-center gap-2 px-3 py-2 overflow-x-auto flex-nowrap flex-1 min-w-0"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
 
-        {/* Heading controls */}
-        <div className="flex items-center rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden text-[10px] font-extrabold uppercase">
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyTextFormat('h1')}
-            className="px-2 py-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer"
-          >
-            H1
-          </button>
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyTextFormat('h2')}
-            className="px-2 py-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
-          >
-            H2
-          </button>
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyTextFormat('h3')}
-            className="px-2 py-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
-          >
-            H3
-          </button>
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyTextFormat('normal')}
-            className="px-2 py-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
-          >
-            Normal
-          </button>
-        </div>
-
-        <div className="flex-1" />
-
-        {/* Options Dropdown Menu */}
-        <div className="relative">
-          <button
-            onClick={() => setOptionsMenuOpen(!optionsMenuOpen)}
-            className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-555 cursor-pointer"
-            title="More Options"
-          >
-            <MoreVertical size={16} />
-          </button>
-
-          {optionsMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setOptionsMenuOpen(false)} />
-              <div className="absolute right-0 mt-1.5 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                <button
-                  onClick={handleCopyNoteContent}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-350 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
-                >
-                  <Copy size={13} />
-                  Copy Content
-                </button>
-                <button
-                  onClick={handleDuplicateNote}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-355 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
-                >
-                  <Plus size={13} />
-                  Duplicate Note
-                </button>
-                <button
-                  onClick={handleClearNoteContent}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
-                >
-                  <FileText size={13} />
-                  Clear Content
-                </button>
-                <div className="h-px bg-zinc-150 dark:bg-zinc-800 my-1" />
-                <button
-                  onClick={handleDeleteNote}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-655 hover:bg-red-50 dark:hover:bg-red-955/20 text-left transition-colors cursor-pointer"
-                >
-                  <Trash2 size={13} />
-                  Delete Note
-                </button>
-              </div>
-            </>
+          {/* Optional prefix slot (e.g. note picker dropdown from overlay) */}
+          {toolbarPrefix && (
+            <div className="shrink-0 flex items-center">{toolbarPrefix}</div>
           )}
-        </div>
+
+          {/* Style Controls (B, I, U) */}
+          <div className="shrink-0 flex items-center rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyTextFormat('bold')}
+              className="p-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer font-bold"
+              title="Bold"
+            >
+              <Bold size={13} />
+            </button>
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyTextFormat('italic')}
+              className="p-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
+              title="Italic"
+            >
+              <Italic size={13} />
+            </button>
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyTextFormat('underline')}
+              className="p-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
+              title="Underline"
+            >
+              <Underline size={13} />
+            </button>
+          </div>
+
+          {/* Highlighter Color Options */}
+          <div className="shrink-0 flex items-center gap-1.5 px-2">
+            {(['grey', 'gold', 'green', 'red', 'blue'] as const).map(color => (
+              <button
+                key={color}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => applyTextHighlight(color)}
+                className={`w-6 h-6 rounded cursor-pointer transition-all hover:scale-110 ${getNoteCircleClass(color)}`}
+                title={`Highlight ${color}`}
+              />
+            ))}
+          </div>
+
+          {/* Heading controls */}
+          <div className="shrink-0 flex items-center rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden text-[10px] font-extrabold uppercase">
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyTextFormat('h1')}
+              className="px-2 py-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer"
+            >
+              H1
+            </button>
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyTextFormat('h2')}
+              className="px-2 py-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
+            >
+              H2
+            </button>
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyTextFormat('h3')}
+              className="px-2 py-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
+            >
+              H3
+            </button>
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyTextFormat('normal')}
+              className="px-2 py-1.5 text-zinc-550 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l border-zinc-100 dark:border-zinc-800 transition cursor-pointer"
+            >
+              Normal
+            </button>
+          </div>
+
+          {/* Options Dropdown Menu */}
+          <div className="shrink-0 relative">
+            <button
+              onClick={() => setOptionsMenuOpen(!optionsMenuOpen)}
+              className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-555 cursor-pointer"
+              title="More Options"
+            >
+              <MoreVertical size={16} />
+            </button>
+
+            {optionsMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setOptionsMenuOpen(false)} />
+                <div className="absolute left-0 mt-1.5 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <button
+                    onClick={handleCopyNoteContent}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-350 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
+                  >
+                    <Copy size={13} />
+                    Copy Content
+                  </button>
+                  <button
+                    onClick={handleDuplicateNote}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-355 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
+                  >
+                    <Plus size={13} />
+                    Duplicate Note
+                  </button>
+                  <button
+                    onClick={handleClearNoteContent}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
+                  >
+                    <FileText size={13} />
+                    Clear Content
+                  </button>
+                  <div className="h-px bg-zinc-150 dark:bg-zinc-800 my-1" />
+                  <button
+                    onClick={handleDeleteNote}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-655 hover:bg-red-50 dark:hover:bg-red-955/20 text-left transition-colors cursor-pointer"
+                  >
+                    <Trash2 size={13} />
+                    Delete Note
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+        </div>{/* end scrollable region */}
+
+        {/* ── Fixed suffix: always visible on the right ── */}
+        {toolbarSuffix && (
+          <div className="shrink-0 flex items-center pr-1">{toolbarSuffix}</div>
+        )}
+
       </div>
 
       {/* Note Editor Workspace */}
       <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-4 min-h-0 overflow-y-auto">
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           .editor-content:empty:before {
             content: attr(placeholder);
             color: #a1a1aa;
@@ -389,9 +433,9 @@ export default function NoteEditor({ noteId, onDelete }: NoteEditorProps) {
           onChange={(e) => setEditorTitle(e.target.value)}
           className="w-full text-xl sm:text-2xl font-black tracking-tight border-0 outline-none bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-300 focus:ring-0 focus:outline-none"
         />
-        
-        <div className="w-full h-px bg-zinc-150 dark:bg-zinc-800 shrink-0" />
-        
+
+        <div className="w-full h-[1px] bg-zinc-100 dark:bg-zinc-800 shrink-0" />
+
         <div
           ref={editorRef}
           contentEditable={true}

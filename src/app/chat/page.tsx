@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import { subjects, getSubjectIcon } from '@/utils/subjects';
 import Link from 'next/link';
 import { Send, Image as ImageIcon, Paperclip, Hash, Users, ChevronLeft, Info, Mic, Heart, StopCircle, Trash2, Settings } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 interface ChatMessage {
   id: string;
@@ -654,17 +655,7 @@ export default function ChatPage() {
                           {/* Left: Avatar or Hover Timestamp */}
                           <div className="w-10 h-10 flex-shrink-0 flex items-start justify-center">
                             {showAvatarAndHeader ? (
-                              senderProfile.avatar_url ? (
-                                <img
-                                  src={senderProfile.avatar_url}
-                                  alt={senderProfile.username}
-                                  className="w-10 h-10 rounded-full object-cover border border-zinc-100 dark:border-zinc-850"
-                                />
-                              ) : (
-                                <div className={`w-10 h-10 rounded-full bg-gradient-to-tr ${getAvatarBg(senderProfile.username)} text-xs font-bold text-white flex items-center justify-center uppercase shadow-sm`}>
-                                  {senderProfile.username.charAt(0)}
-                                </div>
-                              )
+                              <Avatar avatarUrl={senderProfile.avatar_url} username={senderProfile.username} sizeClass="w-10 h-10" textSizeClass="text-sm font-bold" />
                             ) : (
                               // Discord style: show timestamp on hover when grouped
                               <span className="hidden group-hover:block text-[9px] text-zinc-400 dark:text-zinc-500 select-none mt-1">

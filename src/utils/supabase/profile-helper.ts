@@ -20,6 +20,24 @@ export const DEFAULT_AVATARS = [
 ];
 
 // Fallback profile if Supabase tables are not set up yet
+export function getAvatarGradient(username: string): string {
+  const name = username || 'User';
+  const charCode = name.toLowerCase().charCodeAt(0) || 97;
+  const gradients = [
+    'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)', // Coral Sunset
+    'linear-gradient(135deg, #4E65FF 0%, #92EFFD 100%)', // Cool Ocean
+    'linear-gradient(135deg, #7F00FF 0%, #E100FF 100%)', // Purple Haze
+    'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', // Green Oasis
+    'linear-gradient(135deg, #f857a6 0%, #ff5858 100%)', // Pink Blush
+    'linear-gradient(135deg, #FBD3E9 0%, #BB377D 100%)', // Rose Petal
+    'linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%)', // Sky Blue
+    'linear-gradient(135deg, #f12711 0%, #f5af19 100%)', // Sunset Glow
+    'linear-gradient(135deg, #111111 0%, #444444 100%)', // Onyx Dark
+    'linear-gradient(135deg, #8A2387 0%, #E94057 50%, #F27121 100%)', // Vibrant Tri
+  ];
+  return gradients[charCode % gradients.length];
+}
+
 const LOCAL_STORAGE_KEY = 'precision_edu_local_profile';
 
 export function getLocalProfileFallback(userId: string, email: string | null): UserProfile {
