@@ -12,11 +12,63 @@ import Link from 'next/link';
 import { ensureUserProfile, DEFAULT_AVATARS, UserProfile } from '@/utils/supabase/profile-helper';
 import Avatar from '@/components/Avatar';
 
-interface PageProps {
+interface PostComment {
+  id: string;
+  user_id: string;
+  username: string;
+  avatar_url: string;
+  content: string;
+  created_at: string;
+}
+
+interface UserPost {
+  id: string;
+  user_id: string;
+  username: string;
+  avatar_url: string;
+  content: string;
+  created_at: string;
+  likes: string[];
+  comments: PostComment[];
+}
+
+const getMockPosts = (userUsername: string, avatarUrl: string): UserPost[] => [
+  {
+    id: 'mock-1',
+    user_id: 'mock-user-id',
+    username: userUsername,
+    avatar_url: avatarUrl || "",
+    content: "Getting ready for Chemistry Unit 4! Making revision notes on organic synthesis pathways today. 🧪📝",
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    likes: [],
+    comments: [
+      {
+        id: 'mock-comment-1',
+        user_id: 'visitor-1',
+        username: 'revision_guru',
+        avatar_url: 'linear-gradient(135deg, #10B981, #059669)',
+        content: "Organic synthesis is tough! Do you have any good summaries for the transition metals reactions?",
+        created_at: new Date(Date.now() - 3600000).toISOString()
+      }
+    ]
+  },
+  {
+    id: 'mock-2',
+    user_id: 'mock-user-id',
+    username: userUsername,
+    avatar_url: avatarUrl || "",
+    content: "Highly recommend using the calendar tab on Precision Edu to map out mock exams! It has completely sorted out my revision schedule.",
+    created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
+    likes: ['revision_guru'],
+    comments: []
+  }
+];
+
+interface ProfilePageProps {
   params: Promise<{ username: string }>;
 }
 
-export default function UserProfilePage({ params }: PageProps) {
+export default function UserProfilePage({ params }: ProfilePageProps) {
   const router = useRouter();
   const supabase = createClient();
   
@@ -33,13 +85,14 @@ export default function UserProfilePage({ params }: PageProps) {
   const [activeTab, setActiveTab] = useState<'posts' | 'calendar' | 'saved'>('posts');
 
   // Stats & Data
-  const [stats, setStats] = useState({ sittingsCount: 0, calendarNotesCount: 0 });
-  const [sittingsList, setSittingsList] = useState<any[]>([]);
+  const [stats, setStats] = useState({ postsCount: 0, calendarNotesCount: 0 });
+  const [posts, setPosts] = useState<UserPost[]>([]);
+  const [newPostText, setNewPostText] = useState('');
+  const [activePostCommentId, setActivePostCommentId] = useState<string | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
-  const [isScoresPrivate, setIsScoresPrivate] = useState(false);
-
-  // Followers count helper
-  const [followersCount, setFollowersCount] = useState(128);
+  // Followers/Following count helpers
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
     async function loadProfileAndData() {
@@ -81,71 +134,98 @@ export default function UserProfilePage({ params }: PageProps) {
         const owner = user ? user.id === resolvedProfile.id : false;
         setIsOwner(owner);
 
-        // Mock followers count based on username length for visual variety
-        setFollowersCount((username.length * 17) + 34);
+        // Fetch actual follows count and state
+        let isUserFollowing = false;
+        let followerCountVal = 0;
+        let followingCountVal = 0;
+        try {
+          const { count: followersCountRes, error: fErr } = await supabase
+            .from('follows')
+            .select('*', { count: 'exact', head: true })
+            .eq('following_id', resolvedProfile.id);
+          if (!fErr && followersCountRes !== null) followerCountVal = followersCountRes;
 
-        // 3. Fetch user dashboard statistics & grid data
-        const { data: scores, error: scoresErr } = await supabase
-          .from('dashboard_scores')
-          .select('content')
-          .eq('user_id', resolvedProfile.id)
-          .eq('title', 'main_scores')
-          .maybeSingle();
+          const { count: followingCountRes, error: fgErr } = await supabase
+            .from('follows')
+            .select('*', { count: 'exact', head: true })
+            .eq('follower_id', resolvedProfile.id);
+          if (!fgErr && followingCountRes !== null) followingCountVal = followingCountRes;
 
-        // Check if scores are private (query returns null or fails because of RLS on other user's rows)
-        if (scoresErr || (!owner && !scores)) {
-          // If not owner and query returned nothing or failed, it's private
-          if (!owner) {
-            setIsScoresPrivate(true);
+          if (user && !owner) {
+            const { data: followRel, error: relErr } = await supabase
+              .from('follows')
+              .select('*')
+              .eq('follower_id', user.id)
+              .eq('following_id', resolvedProfile.id)
+              .maybeSingle();
+            if (!relErr && followRel) isUserFollowing = true;
           }
+        } catch (followQueryErr) {
+          console.warn("Follows query error:", followQueryErr);
         }
+        setFollowersCount(followerCountVal);
+        setFollowingCount(followingCountVal);
+        setIsFollowing(isUserFollowing);
 
-        // Calculate and build sittings list
-        let papersList: any[] = [];
-        let scoresCount = 0;
-        if (scores?.content?.scores) {
-          const ial = scores.content.scores.IAL || {};
-          const igcse = scores.content.scores.IGCSE || {};
+        // 3. Load posts from Supabase database
+        const { data: postsData, error: postsErr } = await supabase
+          .from('posts')
+          .select(`
+            id,
+            content,
+            created_at,
+            user_id,
+            profiles!user_id (
+              username,
+              avatar_url
+            ),
+            likes (
+              user_id
+            ),
+            comments (
+              id,
+              content,
+              created_at,
+              user_id,
+              profiles!user_id (
+                username,
+                avatar_url
+              )
+            )
+          `)
+          .eq('user_id', resolvedProfile.id)
+          .order('created_at', { ascending: false });
 
-          // Flatten sittings
-          // Structure: IAL: { "IAL_2024_Jun_Physics_Paper_1": "67", ... }
-          const parseSittings = (modeScores: any, modeLabel: string) => {
-            Object.entries(modeScores).forEach(([key, val]) => {
-              if (val && val !== 'N/A' && !isNaN(parseFloat(val as string))) {
-                // Key format: IAL_2024_Jun_Physics_Paper_1
-                const parts = key.split('_');
-                if (parts.length >= 5) {
-                  const year = parts[1];
-                  const series = parts[2];
-                  const subject = parts[3];
-                  const paper = parts.slice(4).join(' ');
-                  papersList.push({
-                    id: key,
-                    mode: modeLabel,
-                    year,
-                    series,
-                    subject,
-                    paper,
-                    score: parseFloat(val as string)
-                  });
-                } else {
-                  papersList.push({
-                    id: key,
-                    mode: modeLabel,
-                    subject: 'Subject',
-                    paper: key,
-                    score: parseFloat(val as string)
-                  });
-                }
-              }
-            });
-          };
-
-          parseSittings(ial, 'IAL');
-          parseSittings(igcse, 'IGCSE');
-          scoresCount = papersList.length;
-          setSittingsList(papersList);
+        let loadedPosts: UserPost[] = [];
+        if (postsData) {
+          loadedPosts = postsData.map((p: any) => {
+            const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+            return {
+              id: p.id,
+              user_id: p.user_id,
+              username: profile?.username || resolvedProfile.username,
+              avatar_url: profile?.avatar_url || resolvedProfile.avatar_url || "",
+              content: p.content,
+              created_at: p.created_at,
+              likes: p.likes ? p.likes.map((l: any) => l.user_id) : [],
+              comments: p.comments 
+                ? p.comments.map((c: any) => {
+                    const commenterProfile = Array.isArray(c.profiles) ? c.profiles[0] : c.profiles;
+                    return {
+                      id: c.id,
+                      post_id: p.id,
+                      user_id: c.user_id,
+                      username: commenterProfile?.username || 'anonymous',
+                      avatar_url: commenterProfile?.avatar_url || '',
+                      content: c.content,
+                      created_at: c.created_at
+                    };
+                  }).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                : []
+            };
+          });
         }
+        setPosts(loadedPosts);
 
         // 4. Fetch user calendar events
         const { data: calendar } = await supabase
@@ -168,7 +248,7 @@ export default function UserProfilePage({ params }: PageProps) {
           setCalendarEvents(eventsList);
         }
 
-        setStats({ sittingsCount: scoresCount, calendarNotesCount });
+        setStats({ postsCount: loadedPosts.length, calendarNotesCount });
 
       } catch (err: any) {
         console.error('Failed to load user profile data:', err);
@@ -181,9 +261,182 @@ export default function UserProfilePage({ params }: PageProps) {
     loadProfileAndData();
   }, [username, supabase]);
 
-  const toggleFollow = () => {
-    setIsFollowing(!isFollowing);
-    setFollowersCount(prev => isFollowing ? prev - 1 : prev + 1);
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPostText.trim() || !currentUser || !targetProfile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .insert({
+          user_id: currentUser.id,
+          content: newPostText.trim()
+        })
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id,
+          profiles!user_id (
+            username,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const profile = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
+        const newPost: UserPost = {
+          id: data.id,
+          user_id: data.user_id,
+          username: profile?.username || targetProfile.username,
+          avatar_url: profile?.avatar_url || targetProfile.avatar_url || "",
+          content: data.content,
+          created_at: data.created_at,
+          likes: [],
+          comments: []
+        };
+        setPosts(prev => [newPost, ...prev]);
+        setStats(prev => ({ ...prev, postsCount: prev.postsCount + 1 }));
+      }
+      setNewPostText('');
+    } catch (err: any) {
+      alert(`Failed to create post: ${err.message || err}`);
+    }
+  };
+
+  const handleLikePost = async (postId: string) => {
+    if (!currentUser) {
+      alert("Please sign in to like posts.");
+      return;
+    }
+
+    try {
+      const isCurrentlyLiked = posts.find(p => p.id === postId)?.likes.includes(currentUser.id);
+
+      if (isCurrentlyLiked) {
+        const { error } = await supabase
+          .from('likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return { ...p, likes: p.likes.filter(id => id !== currentUser.id) };
+          }
+          return p;
+        }));
+      } else {
+        const { error } = await supabase
+          .from('likes')
+          .insert({
+            post_id: postId,
+            user_id: currentUser.id
+          });
+
+        if (error) throw error;
+
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return { ...p, likes: [...p.likes, currentUser.id] };
+          }
+          return p;
+        }));
+      }
+    } catch (err: any) {
+      alert(`Failed to toggle like: ${err.message || err}`);
+    }
+  };
+
+  const handleAddComment = async (postId: string, commentText: string) => {
+    if (!currentUser) {
+      alert("Please sign in to comment.");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({
+          post_id: postId,
+          user_id: currentUser.id,
+          content: commentText.trim()
+        })
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id,
+          profiles!user_id (
+            username,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const profile = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
+        const newComment: PostComment = {
+          id: data.id,
+          user_id: data.user_id,
+          username: profile?.username || 'anonymous',
+          avatar_url: profile?.avatar_url || '',
+          content: data.content,
+          created_at: data.created_at
+        };
+
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return { ...p, comments: [...p.comments, newComment] };
+          }
+          return p;
+        }));
+      }
+    } catch (err: any) {
+      alert(`Failed to add reply: ${err.message || err}`);
+    }
+  };
+  const toggleFollow = async () => {
+    if (!currentUser || !targetProfile) {
+      alert("Please sign in to follow users.");
+      return;
+    }
+
+    try {
+      if (isFollowing) {
+        const { error } = await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', currentUser.id)
+          .eq('following_id', targetProfile.id);
+
+        if (error) throw error;
+
+        setIsFollowing(false);
+        setFollowersCount(prev => Math.max(0, prev - 1));
+      } else {
+        const { error } = await supabase
+          .from('follows')
+          .insert({
+            follower_id: currentUser.id,
+            following_id: targetProfile.id
+          });
+
+        if (error) throw error;
+
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+      }
+    } catch (err: any) {
+      alert(`Failed to update follow relationship: ${err.message || err}`);
+    }
   };
 
   const renderAvatar = (urlOrGradient: string, sizeClass = "h-20 w-20 sm:h-24 sm:w-24") => {
@@ -298,19 +551,18 @@ export default function UserProfilePage({ params }: PageProps) {
                 )}
               </div>
             </div>
-
-            {/* Middle row: Stats count */}
+                  {/* Middle row: Stats count */}
             <div className="flex justify-center sm:justify-start gap-8 text-sm">
               <div>
-                <span className="font-extrabold">{isScoresPrivate ? '—' : stats.sittingsCount}</span>
-                <span className="text-zinc-500 dark:text-zinc-400 ml-1">sittings</span>
+                <span className="font-extrabold">{stats.postsCount}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 ml-1">posts</span>
               </div>
               <div>
                 <span className="font-extrabold">{followersCount}</span>
                 <span className="text-zinc-500 dark:text-zinc-400 ml-1">followers</span>
               </div>
               <div>
-                <span className="font-extrabold">{(username.length * 12) + 21}</span>
+                <span className="font-extrabold">{followingCount}</span>
                 <span className="text-zinc-500 dark:text-zinc-400 ml-1">following</span>
               </div>
             </div>
@@ -327,133 +579,150 @@ export default function UserProfilePage({ params }: PageProps) {
             </div>
           </div>
         </div>
-
-        {/* ── FEED / GRID VIEWS ── */}
-        <div className="space-y-4">
-          
-          {/* Tabs header */}
-          <div className="flex justify-center gap-12 border-b border-zinc-200 dark:border-zinc-800 text-xs uppercase tracking-widest font-bold">
-            <button
-              onClick={() => setActiveTab('posts')}
-              className={`flex items-center gap-1.5 py-4 border-t-2 -mt-[2px] transition-all cursor-pointer ${activeTab === 'posts' ? 'border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-100' : 'border-transparent text-zinc-400 hover:text-zinc-600'}`}
-            >
-              <Grid size={14} />
-              Sittings
-            </button>
-            <button
-              onClick={() => setActiveTab('calendar')}
-              className={`flex items-center gap-1.5 py-4 border-t-2 -mt-[2px] transition-all cursor-pointer ${activeTab === 'calendar' ? 'border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-100' : 'border-transparent text-zinc-400 hover:text-zinc-600'}`}
-            >
-              <Calendar size={14} />
-              Tasks ({isScoresPrivate ? '—' : stats.calendarNotesCount})
-            </button>
-            <button
-              onClick={() => setActiveTab('saved')}
-              className={`flex items-center gap-1.5 py-4 border-t-2 -mt-[2px] transition-all cursor-pointer ${activeTab === 'saved' ? 'border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-100' : 'border-transparent text-zinc-400 hover:text-zinc-600'}`}
-            >
-              <Bookmark size={14} />
-              Saved
-            </button>
-          </div>
-
-          {/* Tab content */}
-          <div className="pt-2">
-            {isScoresPrivate ? (
-              
-              /* RLS PRIVACY LOCK SCREEN */
-              <div className="text-center py-16 border border-zinc-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-900 max-w-md mx-auto space-y-4 px-6 shadow-sm">
-                <Lock size={36} className="mx-auto text-zinc-400 dark:text-zinc-500" />
-                <h3 className="text-base font-extrabold uppercase tracking-wider">This Account is Private</h3>
-                <p className="text-xs text-zinc-500 leading-relaxed">
-                  Follow @{targetProfile.username} to request view access to their examination scores and study dashboard sittings.
-                </p>
-                <div className="pt-2">
-                  <button 
-                    onClick={toggleFollow}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold tracking-wider uppercase cursor-pointer"
+          {/* ── POSTS FEED ── */}
+        <div className="space-y-6 pt-6">
+          <div className="space-y-6 max-w-2xl mx-auto">
+            {isOwner && (
+              <form onSubmit={handleCreatePost} className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 rounded-lg p-4 space-y-3">
+                <div className="flex gap-3">
+                  <div className="shrink-0">
+                    {renderAvatar(currentUser?.user_metadata?.avatar_url || targetProfile.avatar_url || "", "h-9 w-9")}
+                  </div>
+                  <div className="flex-grow">
+                    <textarea
+                      placeholder="Share an update or ask a study question..."
+                      value={newPostText}
+                      onChange={(e) => setNewPostText(e.target.value)}
+                      rows={3}
+                      className="w-full text-sm bg-transparent border-0 focus:ring-0 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none resize-none text-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                  <span className="text-[10px] text-zinc-400 dark:text-zinc-550">Posts are visible to anyone visiting your profile</span>
+                  <button
+                    type="submit"
+                    disabled={!newPostText.trim()}
+                    className="px-4 py-1.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded text-xs font-bold hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
                   >
-                    {isFollowing ? 'Requested' : 'Follow'}
+                    Post
                   </button>
                 </div>
+              </form>
+            )}
+
+            {posts.length === 0 ? (
+              <div className="text-center py-16 text-zinc-400">
+                <MessageCircle size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-semibold">No posts yet</p>
+                <p className="text-xs mt-1">Updates and threads will appear here.</p>
               </div>
-
-            ) : activeTab === 'posts' ? (
-              
-              /* SITTINGS FEED (GRID) */
-              sittingsList.length === 0 ? (
-                <div className="text-center py-16 text-zinc-400">
-                  <Grid size={32} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-semibold">No sittings recorded</p>
-                  <p className="text-xs mt-1">This user hasn't saved mock exams into their dashboard.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {sittingsList.map((sitting) => (
-                    <div 
-                      key={sitting.id}
-                      className={`p-4 rounded border flex flex-col justify-between h-32 bg-gradient-to-br transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${getSubjectColor(sitting.subject)}`}
-                    >
-                      <div className="space-y-1 text-left">
-                        <div className="flex justify-between items-start gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/40 dark:bg-black/20">{sitting.mode}</span>
-                          <span className="text-[10px] font-bold opacity-60">{sitting.year} {sitting.series}</span>
-                        </div>
-                        <h4 className="font-extrabold text-sm line-clamp-1 mt-1">{sitting.subject}</h4>
-                        <p className="text-[10px] opacity-75 line-clamp-1">{sitting.paper}</p>
-                      </div>
-                      
-                      <div className="flex items-end justify-between border-t border-current/10 pt-2">
-                        <span className="text-2xl font-black">{sitting.score}%</span>
-                        <div className="flex items-center gap-1 text-[10px] font-bold">
-                          <Heart size={10} className="fill-current" />
-                          <span>Like</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-
-            ) : activeTab === 'calendar' ? (
-              
-              /* CALENDAR/TASKS TAB */
-              calendarEvents.length === 0 ? (
-                <div className="text-center py-16 text-zinc-400">
-                  <Calendar size={32} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-semibold">No study tasks active</p>
-                  <p className="text-xs mt-1">No notes recorded on the study planner.</p>
-                </div>
-              ) : (
-                <div className="max-w-md mx-auto space-y-3">
-                  {calendarEvents.map((evt, idx) => (
-                    <div key={idx} className="flex gap-4 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded text-left">
-                      <div className="text-xs font-bold text-zinc-400 w-24 shrink-0 border-r border-zinc-100 dark:border-zinc-800 pr-2">
-                        {evt.date}
-                      </div>
-                      <div className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                        {evt.note}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-
             ) : (
-              
-              /* SAVED ITEMS TAB */
-              <div className="text-center py-16 text-zinc-400 max-w-sm mx-auto space-y-3">
-                <Bookmark size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-semibold">No saved collection</p>
-                <p className="text-xs">Saved documents, past paper shortcuts, and revision folders will display here.</p>
-                {isOwner && (
-                  <div className="pt-2">
-                    <Link href="/past-papers" className="px-4 py-2 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:opacity-90 rounded text-[10px] font-bold tracking-wider uppercase">
-                      Browse Papers →
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <div className="space-y-4">
+                {posts.map((post) => (
+                  <div key={post.id} className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/20 rounded-lg p-5 space-y-4 text-left">
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-3">
+                        {renderAvatar(post.avatar_url || "", "h-9 w-9")}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">@{post.username}</span>
+                            <span className="text-[10px] text-zinc-400">•</span>
+                            <span className="text-[10px] text-zinc-400">
+                              {new Date(post.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-zinc-400">Student</p>
+                        </div>
+                      </div>
+                    </div>
 
+                    <p className="text-sm leading-relaxed text-zinc-850 dark:text-zinc-200 whitespace-pre-wrap">
+                      {post.content}
+                    </p>
+
+                    <div className="flex items-center gap-6 border-t border-zinc-100 dark:border-zinc-850/60 pt-3 text-xs text-zinc-500">
+                      <button
+                        onClick={() => handleLikePost(post.id)}
+                        className={`flex items-center gap-1.5 font-bold transition-colors cursor-pointer hover:opacity-80 ${
+                          currentUser && post.likes.includes(currentUser.id)
+                            ? 'text-red-500'
+                            : 'hover:text-zinc-800 dark:hover:text-zinc-250'
+                        }`}
+                      >
+                        <Heart
+                          size={14}
+                          className={currentUser && post.likes.includes(currentUser.id) ? 'fill-current text-red-500' : ''}
+                        />
+                        <span>{post.likes.length}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setActivePostCommentId(activePostCommentId === post.id ? null : post.id)}
+                        className="flex items-center gap-1.5 font-bold hover:text-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
+                      >
+                        <MessageCircle size={14} />
+                        <span>{post.comments.length}</span>
+                      </button>
+                    </div>
+
+                    {/* Comments section */}
+                    {activePostCommentId === post.id && (
+                      <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-850 space-y-4">
+                        {post.comments.length > 0 && (
+                          <div className="space-y-4 pl-4 border-l border-zinc-200 dark:border-zinc-800">
+                            {post.comments.map((comment) => (
+                              <div key={comment.id} className="text-left space-y-1">
+                                <div className="flex items-center gap-2">
+                                  {renderAvatar(comment.avatar_url || "", "h-5 w-5")}
+                                  <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">@{comment.username}</span>
+                                  <span className="text-[9px] text-zinc-400">
+                                    {new Date(comment.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-zinc-700 dark:text-zinc-300 pl-7 leading-relaxed">
+                                  {comment.content}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {currentUser ? (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const form = e.currentTarget;
+                              const fd = new FormData(form);
+                              const content = fd.get('commentText') as string;
+                              if (content.trim()) {
+                                handleAddComment(post.id, content.trim());
+                                form.reset();
+                              }
+                            }}
+                            className="flex gap-2 items-center"
+                          >
+                            <input
+                              name="commentText"
+                              type="text"
+                              placeholder="Write a comment..."
+                              className="flex-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-700 text-xs rounded px-3 py-2 focus:outline-none text-zinc-900 dark:text-zinc-100"
+                            />
+                            <button
+                              type="submit"
+                              className="px-4 py-2 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded text-xs font-bold hover:opacity-90 cursor-pointer"
+                            >
+                              Reply
+                            </button>
+                          </form>
+                        ) : (
+                          <p className="text-[10px] text-zinc-400">Sign in to leave a comment.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

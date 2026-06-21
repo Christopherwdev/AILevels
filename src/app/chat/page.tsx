@@ -39,6 +39,13 @@ export default function ChatPage() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
   
+  // DMs State
+  const [activeDMs, setActiveDMs] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<'group' | 'private'>('group');
+  
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -61,7 +68,7 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auth check
+  // Auth check and DMs loader
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -76,12 +83,53 @@ export default function ChatPage() {
         .select('username, avatar_url')
         .eq('id', user.id)
         .maybeSingle();
-      if (profile?.username) setUsername(profile.username);
+      
+      let currentUsername = 'Anonymous';
+      if (profile?.username) {
+        setUsername(profile.username);
+        currentUsername = profile.username;
+      }
+
+      // Fetch all unique private DM rooms user has participated in
+      try {
+        const { data: dmRoomsData } = await supabase
+          .from('chat_messages')
+          .select('room')
+          .like('room', `dm:%${currentUsername}%`);
+
+        const uniqueRecipients = new Set<string>();
+        if (dmRoomsData) {
+          dmRoomsData.forEach((row: any) => {
+            const parts = row.room.split(':');
+            if (parts[0] === 'dm' && parts.length === 3) {
+              const recipientName = parts[1] === currentUsername ? parts[2] : parts[1];
+              uniqueRecipients.add(recipientName);
+            }
+          });
+        }
+
+        const savedDMs = localStorage.getItem(`precision_edu_active_dms_${user.id}`);
+        const localList: string[] = savedDMs ? JSON.parse(savedDMs) : [];
+        const merged = Array.from(new Set([...localList, ...Array.from(uniqueRecipients)]));
+        setActiveDMs(merged);
+        localStorage.setItem(`precision_edu_active_dms_${user.id}`, JSON.stringify(merged));
+      } catch (dmErr) {
+        console.error("Failed to load DMs on init:", dmErr);
+      }
 
       setLoading(false);
     }
     init();
   }, [router, supabase]);
+
+  // Synchronize sidebar tab with active room type
+  useEffect(() => {
+    if (activeRoom.startsWith('dm:')) {
+      setSidebarTab('private');
+    } else {
+      setSidebarTab('group');
+    }
+  }, [activeRoom]);
 
   // Load messages + realtime subscription
   useEffect(() => {
@@ -437,6 +485,52 @@ export default function ChatPage() {
     }
   };
 
+  const handleSearchUsers = async (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .ilike('username', `%${query.trim()}%`)
+        .neq('id', userId)
+        .limit(10);
+
+      if (!error && data) {
+        setSearchResults(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleStartDM = (recipient: UserProfile) => {
+    if (!userId || !username) return;
+    
+    const sorted = [username, recipient.username].sort();
+    const dmRoom = `dm:${sorted[0]}:${sorted[1]}`;
+    
+    if (!activeDMs.includes(recipient.username)) {
+      const updated = [...activeDMs, recipient.username];
+      setActiveDMs(updated);
+      localStorage.setItem(`precision_edu_active_dms_${userId}`, JSON.stringify(updated));
+    }
+    
+    setActiveRoom(dmRoom);
+    setSearchQuery('');
+    setSearchResults([]);
+    if (window.innerWidth < 768) {
+      setShowSidebar(false);
+    }
+  };
+
   const renderChannelButton = (s: typeof subjects[0]) => {
     const isSelected = activeRoom === s.slug;
     const ChannelIcon = getSubjectIcon(s.iconName);
@@ -452,8 +546,8 @@ export default function ChatPage() {
         }}
         className={`w-full flex items-center gap-3.5 px-5 py-2.5 transition-all text-left cursor-pointer border-r-2 border-transparent ${
           isSelected
-            ? 'bg-zinc-50 dark:bg-zinc-900/60 font-extrabold'
-            : 'hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
+            ? 'bg-zinc-200 dark:bg-zinc-900/60 font-extrabold'
+            : 'hover:bg-zinc-100 dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
         }`}
       >
         {/* Circular Icon (Black border, theme color, white icon) */}
@@ -527,13 +621,118 @@ export default function ChatPage() {
     <div className="h-[calc(100vh-4rem)] flex bg-white dark:bg-black overflow-hidden font-sans">
       {/* Sidebar — Room List */}
       <aside className={`${showSidebar ? 'w-full md:w-80' : 'w-0 overflow-hidden'} flex-shrink-0 border-r border-zinc-100 dark:border-zinc-900 flex flex-col transition-all duration-300 bg-white dark:bg-black`}>
-        <div className="p-5 border-b border-zinc-50 dark:border-zinc-950">
+        <div className="p-5 border-b border-zinc-50 dark:border-zinc-950 flex flex-col gap-4 select-none">
           <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Messages
           </h2>
+          <div className="flex bg-zinc-100 dark:bg-zinc-900 p-0.5 rounded-lg">
+            <button
+              onClick={() => setSidebarTab('group')}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                sidebarTab === 'group'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
+              }`}
+            >
+              Groups
+            </button>
+            <button
+              onClick={() => setSidebarTab('private')}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                sidebarTab === 'private'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
+              }`}
+            >
+              Private
+            </button>
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto py-2 no-scrollbar space-y-0.5">
-          {subjects.map(renderChannelButton)}
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar">
+          {sidebarTab === 'group' && (
+            <div className="py-2">
+              <p className="px-5 text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-550 mb-1.5 select-none">
+                Group Chats
+              </p>
+              {subjects.map(renderChannelButton)}
+            </div>
+          )}
+
+          {/* PRIVATE CHATS / DMs SECTION */}
+          {sidebarTab === 'private' && (
+            <>
+              <div className="px-5 py-4 bg-zinc-50/20 dark:bg-zinc-900/10">
+                <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-550 mb-2 select-none">
+                  Private Chats
+                </p>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search users to chat..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchUsers(e.target.value)}
+                    className="w-full text-xs bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-700 text-zinc-900 dark:text-zinc-100"
+                  />
+                  {searchLoading && (
+                    <span className="absolute right-2.5 top-2 w-3.5 h-3.5 border border-zinc-500 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+                
+                {/* Search Results dropdown */}
+                {searchQuery && searchResults.length > 0 && (
+                  <div className="mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded max-h-40 overflow-y-auto shadow-lg z-20 relative">
+                    {searchResults.map((u) => (
+                      <button
+                        key={u.id}
+                        onClick={() => handleStartDM(u)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-zinc-55 dark:hover:bg-zinc-800 border-b border-zinc-100 dark:border-zinc-850 last:border-b-0 cursor-pointer"
+                      >
+                        <Avatar avatarUrl={u.avatar_url} username={u.username} sizeClass="w-6 h-6" textSizeClass="text-[10px] font-bold" />
+                        <span className="font-bold text-zinc-800 dark:text-zinc-200">@{u.username}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {searchQuery && searchResults.length === 0 && !searchLoading && (
+                  <p className="text-[10px] text-zinc-400 mt-2 text-left select-none">No users found.</p>
+                )}
+              </div>
+
+              <div className="flex-1 space-y-0.5 pb-4">
+                {activeDMs.map((dmUsername) => {
+                  const dmRoom = `dm:${[username, dmUsername].sort().join(':')}`;
+                  const isSelected = activeRoom === dmRoom;
+                  
+                  return (
+                    <button
+                      key={dmUsername}
+                      onClick={() => {
+                        setActiveRoom(dmRoom);
+                        if (window.innerWidth < 768) {
+                          setShowSidebar(false);
+                        }
+                      }}
+                      className={`w-full flex items-center gap-3.5 px-5 py-2.5 transition-all text-left cursor-pointer border-r-2 border-transparent ${
+                        isSelected
+                          ? 'bg-zinc-50 dark:bg-zinc-900/60 font-extrabold'
+                          : 'hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
+                      }`}
+                    >
+                      <Avatar avatarUrl={null} username={dmUsername} sizeClass="w-10 h-10" textSizeClass="text-sm font-bold" />
+                      <div className="flex flex-col min-w-0 text-left select-none">
+                        <span className="text-[13px] font-bold text-zinc-900 dark:text-zinc-150 truncate leading-tight">
+                          @{dmUsername}
+                        </span>
+                        <span className="text-[10px] text-zinc-400 dark:text-zinc-550 font-medium mt-0.5">
+                          Direct Message
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
         <div className="p-4 border-t border-zinc-100 dark:border-zinc-900 flex items-center justify-between gap-3 bg-white dark:bg-black select-none">
           <div className="flex items-center gap-3 min-w-0">
@@ -573,18 +772,30 @@ export default function ChatPage() {
             >
               <ChevronLeft size={20} className="text-zinc-700 dark:text-zinc-300" />
             </button>
-            <span className="text-zinc-400 dark:text-zinc-500 text-lg font-bold">#</span>
+            <span className="text-zinc-400 dark:text-zinc-500 text-lg font-bold">
+              {activeRoom.startsWith('dm:') ? '@' : '#'}
+            </span>
             <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
-              {activeSubject?.slug}
+              {activeRoom.startsWith('dm:') 
+                ? activeRoom.split(':').filter(name => name !== 'dm' && name !== username)[0]
+                : activeSubject?.slug
+              }
             </h3>
-            {activeSubject && (
+            {activeRoom.startsWith('dm:') ? (
+              <>
+                <div className="hidden sm:block border-l border-zinc-200 dark:border-zinc-800 h-4 mx-3" />
+                <p className="hidden sm:block text-[11px] text-zinc-400 dark:text-zinc-500 font-medium truncate max-w-md">
+                  Private conversation with @{activeRoom.split(':').filter(name => name !== 'dm' && name !== username)[0]}
+                </p>
+              </>
+            ) : activeSubject ? (
               <>
                 <div className="hidden sm:block border-l border-zinc-200 dark:border-zinc-800 h-4 mx-3" />
                 <p className="hidden sm:block text-[11px] text-zinc-400 dark:text-zinc-500 font-medium truncate max-w-md">
                   Revision, resource sharing, and exam discussions for {activeSubject.level} {activeSubject.name}.
                 </p>
               </>
-            )}
+            ) : null}
           </div>
           <button className="p-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-full transition-colors text-zinc-700 dark:text-zinc-300 cursor-pointer">
             <Info size={18} />
@@ -597,6 +808,14 @@ export default function ChatPage() {
             <div className="h-full flex items-center justify-center max-w-xl mx-auto">
               <div className="text-center space-y-2">
                 {(() => {
+                  if (activeRoom.startsWith('dm:')) {
+                    const otherUser = activeRoom.split(':').filter(name => name !== 'dm' && name !== username)[0] || 'User';
+                    return (
+                      <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center border-2 border-black bg-rose-500 shadow-inner select-none mb-4">
+                        <Users size={32} className="text-white" />
+                      </div>
+                    );
+                  }
                   const EmptyIcon = activeSubject ? getSubjectIcon(activeSubject.iconName) : null;
                   return EmptyIcon ? (
                     <div
@@ -607,9 +826,14 @@ export default function ChatPage() {
                     </div>
                   ) : null;
                 })()}
-                <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">No Messages Yet</p>
+                <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                  {activeRoom.startsWith('dm:') ? 'No messages here yet' : 'No Messages Yet'}
+                </p>
                 <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs mx-auto">
-                  Start the conversation in the #{activeSubject?.name?.toLowerCase()} study group.
+                  {activeRoom.startsWith('dm:') 
+                    ? `Send a message to start a private conversation with @${activeRoom.split(':').filter(name => name !== 'dm' && name !== username)[0]}.`
+                    : `Start the conversation in the #${activeSubject?.name?.toLowerCase()} study group.`
+                  }
                 </p>
               </div>
             </div>
@@ -668,9 +892,12 @@ export default function ChatPage() {
                           <div className="flex-1 min-w-0 text-left">
                             {showAvatarAndHeader && (
                               <div className="flex items-baseline mb-0.5 select-none">
-                                <span className={`text-[13px] font-bold ${isOwn ? 'text-blue-500 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'} hover:underline cursor-pointer mr-2`}>
+                                <Link 
+                                  href={`/user/${senderProfile.username}`}
+                                  className={`text-[13px] font-bold ${isOwn ? 'text-blue-500 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'} hover:underline cursor-pointer mr-2`}
+                                >
                                   {senderProfile.username}
-                                </span>
+                                </Link>
                                 <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
                                   {formatDate(msg.created_at)} {formatTime(msg.created_at)}
                                 </span>

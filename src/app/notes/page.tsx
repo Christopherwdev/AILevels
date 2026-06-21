@@ -287,7 +287,7 @@ export default function NotesPage() {
         </div>
 
         {/* Notes list */}
-        <div className="flex md:flex-col flex-row overflow-x-auto md:overflow-y-auto gap-2 md:space-y-1 md:gap-0 no-scrollbar pr-0">
+        <div className="flex md:flex-col flex-row overflow-x-auto md:overflow-y-auto gap-2 md:space-y-1 md:gap-0 no-scrollbar pr-0 ml-4">
           {filteredNotes.length === 0 ? (
             <div className="text-center py-12 text-zinc-400 text-xs w-full">No notes found.</div>
           ) : (
@@ -295,9 +295,9 @@ export default function NotesPage() {
               <div key={n.id} className="relative group/card pr-0">
                 <button
                   onClick={() => setActiveNoteId(n.id)}
-                  className={`w-full flex flex-col p-4 py-2 text-left transition-all border border-transparent cursor-pointer rounded-r-lg ${
+                  className={`w-full flex flex-col p-4 py-2 text-left transition-all border border-transparent cursor-pointer rounded-lg ${
                     activeNoteId === n.id
-                      ? 'bg-[#00000010] dark:bg-zinc-900 font-extrabold'
+                      ? 'bg-[#00000010] dark:bg-zinc-900'
                       : 'hover:bg-zinc-100/50 dark:hover:bg-zinc-900/10'
                   }`}
                 >
@@ -306,10 +306,10 @@ export default function NotesPage() {
                       {n.title || 'Untitled Note'}
                     </span>
                   </div>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate w-full">
+                  <p className={`text-[10px] text-zinc-400 dark:text-zinc-500 mb-1 truncate w-full`}>
                     {n.content ? n.content.replace(/<[^>]*>/g, '').substring(0, 60) : 'No content'}
                   </p>
-                  <span className="text-[9px] text-zinc-400 font-semibold mt-2 uppercase tracking-wide select-none">
+                  <span className="text-[9px] text-zinc-400 font-semibold mt-0 uppercase tracking-wide select-none">
                     {new Date(n.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                   </span>
                 </button>

@@ -150,9 +150,11 @@ export default function Navbar({ userEmail }: NavbarProps) {
           {/* Logo Section */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-1.5 group">
-              <span className="text-lg sm:text-xl font-black tracking-tight bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 bg-clip-text text-transparent transition-all duration-300 group-hover:opacity-90">
-                Precision
-              </span>
+              <img
+                src="/Precision Logo.svg"
+                alt="Precision Logo"
+                className="h-6 w-auto transition-all duration-300 group-hover:opacity-90"
+              />
               <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-300">
                 Edu
               </span>

@@ -18,6 +18,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Precision Edu | A-Levels Study Tools (Edexcel & Cambridge)",
   description: "Functional educational dashboard and past papers search engine for A-Level and IGCSE students.",
+  icons: {
+    icon: "/Precision Icon.svg",
+    apple: "/Precision Icon.svg",
+  },
 };
 
 export default async function RootLayout({
