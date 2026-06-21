@@ -132,10 +132,10 @@ export default function Navbar({ userEmail }: NavbarProps) {
   }
 
   const navLinkClass = (path: string) =>
-    `flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+    `flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors pt-1 pb-1 border-b-2 ${
       pathname.startsWith(path)
-        ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 pb-1 mt-0.5'
-        : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'
+        ? 'text-zinc-900 dark:text-zinc-100 border-zinc-900 dark:border-zinc-100'
+        : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 border-transparent'
     }`;
 
   const mobileLinkClass = (path: string) =>
@@ -144,7 +144,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
     }`;
 
   return (
-    <nav className="w-full bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-40 transition-colors duration-300">
+    <nav className="w-full bg-transparent dark:bg-black-200 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-40 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
@@ -160,133 +160,127 @@ export default function Navbar({ userEmail }: NavbarProps) {
               </span>
             </Link>
 
-            {/* Navigation Links (Visible only when logged in) */}
-            {userEmail && (
-              <div className="hidden lg:flex items-center gap-6">
-                <Link href="/dashboard" className={navLinkClass('/dashboard')}>
-                  <Layout size={14} />
-                  Dashboard
-                </Link>
-                <Link href="/calendar" className={navLinkClass('/calendar')}>
-                  <Calendar size={14} />
-                  Calendar
-                </Link>
+            {/* Navigation Links (Visible always, regardless of session) */}
+            <div className="hidden lg:flex items-center gap-6">
+              <Link href="/dashboard" className={navLinkClass('/dashboard')}>
+                <Layout size={14} />
+                Dashboard
+              </Link>
+              <Link href="/calendar" className={navLinkClass('/calendar')}>
+                <Calendar size={14} />
+                Calendar
+              </Link>
 
-                {/* Learn Dropdown */}
-                <div ref={learnMenuRef} className="relative">
-                  <button
-                    onClick={() => setIsLearnMenuOpen(!isLearnMenuOpen)}
-                    className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                      pathname.startsWith('/learn')
-                        ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 pb-1 mt-0.5'
-                        : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'
-                    }`}
-                  >
-                    <BookOpen size={14} />
-                    Learn
-                    <ChevronDown size={12} className={`transition-transform duration-200 ${isLearnMenuOpen ? 'rotate-180' : ''}`} />
-                  </button>
+              {/* Learn Dropdown */}
+              <div ref={learnMenuRef} className="relative">
+                <button
+                  onClick={() => setIsLearnMenuOpen(!isLearnMenuOpen)}
+                  className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer pt-1 pb-1 border-b-2 ${
+                    pathname.startsWith('/learn')
+                      ? 'text-zinc-900 dark:text-zinc-100 border-zinc-900 dark:border-zinc-100'
+                      : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 border-transparent'
+                  }`}
+                >
+                  <BookOpen size={14} />
+                  Learn
+                  <ChevronDown size={12} className={`transition-transform duration-200 ${isLearnMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-                  {isLearnMenuOpen && (
-                    <>
-                      {/* Dropdown Backdrop */}
-                      <div className="fixed inset-0 z-[90] bg-transparent cursor-default animate-none" onClick={() => setIsLearnMenuOpen(false)} />
-                      <div className="absolute left-0 mt-3 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-[100] shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
-                      <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IAL Subjects</div>
-                      {subjects.filter(s => s.level === 'IAL').map(s => {
-                        const ItemIcon = getSubjectIcon(s.iconName);
-                        return (
-                          <Link
-                            key={s.slug}
-                            href={`/learn/${s.slug}`}
-                            onClick={() => setIsLearnMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                          >
-                            <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
-                              <ItemIcon size={10} className="text-white" />
-                            </div>
-                            {s.name}
-                          </Link>
-                        );
-                      })}
-                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
-                      <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IGCSE Subjects</div>
-                      {subjects.filter(s => s.level === 'IGCSE').map(s => {
-                        const ItemIcon = getSubjectIcon(s.iconName);
-                        return (
-                          <Link
-                            key={s.slug}
-                            href={`/learn/${s.slug}`}
-                            onClick={() => setIsLearnMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                          >
-                            <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
-                              <ItemIcon size={10} className="text-white" />
-                            </div>
-                            {s.name}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                    </>
-                  )}
-                </div>
-
-                <Link href="/past-papers" className={navLinkClass('/past-papers')}>
-                  <FileText size={14} />
-                  Past Papers
-                </Link>
-                <Link href="/chat" className={navLinkClass('/chat')}>
-                  <MessageCircle size={14} />
-                  Chat
-                </Link>
-                
-                <Link href="/notes" className={navLinkClass('/notes')}>
-                  <FileText size={14} />
-                  Notes
-                </Link>
+                {isLearnMenuOpen && (
+                  <>
+                    {/* Dropdown Backdrop */}
+                    <div className="fixed inset-0 z-[99] bg-transparent cursor-default animate-none" onClick={() => setIsLearnMenuOpen(false)} />
+                    <div className="absolute left-0 mt-3 w-56 bg-white border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-[100] shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IAL Subjects</div>
+                    {subjects.filter(s => s.level === 'IAL').map(s => {
+                      const ItemIcon = getSubjectIcon(s.iconName);
+                      return (
+                        <Link
+                          key={s.slug}
+                          href={`/learn/${s.slug}`}
+                          onClick={() => setIsLearnMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
+                            <ItemIcon size={10} className="text-white" />
+                          </div>
+                          {s.name}
+                        </Link>
+                      );
+                    })}
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                    <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IGCSE Subjects</div>
+                    {subjects.filter(s => s.level === 'IGCSE').map(s => {
+                      const ItemIcon = getSubjectIcon(s.iconName);
+                      return (
+                        <Link
+                          key={s.slug}
+                          href={`/learn/${s.slug}`}
+                          onClick={() => setIsLearnMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
+                            <ItemIcon size={10} className="text-white" />
+                          </div>
+                          {s.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                  </>
+                )}
               </div>
-            )}
+
+              <Link href="/past-papers" className={navLinkClass('/past-papers')}>
+                <FileText size={14} />
+                Past Papers
+              </Link>
+              <Link href="/chat" className={navLinkClass('/chat')}>
+                <MessageCircle size={14} />
+                Chat
+              </Link>
+              
+              <Link href="/notes" className={navLinkClass('/notes')}>
+                <FileText size={14} />
+                Notes
+              </Link>
+            </div>
           </div>
 
           {/* Right Side Panel */}
           <div className="flex items-center gap-4">
- 
+            {/* Mobile Navigation Dropdown/Buttons */}
+            <div className="lg:hidden flex gap-1">
+              <Link href="/dashboard" className={mobileLinkClass('/dashboard')}>
+                <Layout size={16} />
+              </Link>
+              <Link href="/calendar" className={mobileLinkClass('/calendar')}>
+                <Calendar size={16} />
+              </Link>
+              <Link href="/past-papers" className={mobileLinkClass('/past-papers')}>
+                <FileText size={16} />
+              </Link>
+              <Link href="/chat" className={mobileLinkClass('/chat')}>
+                <MessageCircle size={16} />
+              </Link>
+              <Link href="/notes" className={mobileLinkClass('/notes')}>
+                <FileText size={16} />
+              </Link>
+              {userEmail && (
+                <Link
+                  href={username ? `/user/${username}` : '/account'}
+                  className={mobileLinkClass('/user/')}
+                >
+                  <User size={16} />
+                </Link>
+              )}
+            </div>
+
             {/* User Session Interface */}
             {userEmail ? (
               <div className="flex items-center gap-3">
-                {/* Mobile Navigation Dropdown/Buttons */}
-                <div className="lg:hidden flex gap-1">
-                  <Link href="/dashboard" className={mobileLinkClass('/dashboard')}>
-                    <Layout size={16} />
-                  </Link>
-                  <Link href="/calendar" className={mobileLinkClass('/calendar')}>
-                    <Calendar size={16} />
-                  </Link>
-                  <Link href="/past-papers" className={mobileLinkClass('/past-papers')}>
-                    <FileText size={16} />
-                  </Link>
-                  <Link href="/chat" className={mobileLinkClass('/chat')}>
-                    <MessageCircle size={16} />
-                  </Link>
-                  <Link href="/notes" className={mobileLinkClass('/notes')}>
-                    <FileText size={16} />
-                  </Link>
-                  {/* Tutors Mobile (Hidden for now)
-                  <Link href="/tutors" className={mobileLinkClass('/tutors')}>
-                    <GraduationCap size={16} />
-                  </Link>
-                  */}
-                  <Link
-                    href={username ? `/user/${username}` : '/account'}
-                    className={mobileLinkClass('/user/')}
-                  >
-                    <User size={16} />
-                  </Link>
-                </div>
- 
                 {/* Account Dropdown */}
-                <div className="relative hidden sm:block z-40">
+                <div className="relative hidden sm:block z-45">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-2 px-2 py-1.5 border border-zinc-200 dark:border-zinc-850 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer text-zinc-850 dark:text-zinc-150 hover:bg-zinc-50 dark:hover:bg-zinc-850 relative z-40"
@@ -305,7 +299,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                         <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800 text-[10px] text-zinc-400 font-bold uppercase tracking-wider truncate">
                           {userEmail}
                         </div>
-                         <Link
+                        <Link
                           href={username ? `/user/${username}` : '/account'}
                           onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"

@@ -546,8 +546,8 @@ export default function ChatPage() {
         }}
         className={`w-full flex items-center gap-3.5 px-5 py-2.5 transition-all text-left cursor-pointer border-r-2 border-transparent ${
           isSelected
-            ? 'bg-zinc-200 dark:bg-zinc-900/60 font-extrabold'
-            : 'hover:bg-zinc-100 dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
+            ? 'bg-grey-bg dark:bg-zinc-900/60 font-extrabold'
+            : 'hover:bg-grey-hover dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
         }`}
       >
         {/* Circular Icon (Black border, theme color, white icon) */}
@@ -671,7 +671,7 @@ export default function ChatPage() {
                     placeholder="Search users to chat..."
                     value={searchQuery}
                     onChange={(e) => handleSearchUsers(e.target.value)}
-                    className="w-full text-xs bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-700 text-zinc-900 dark:text-zinc-100"
+                    className="w-full text-xs bg-grey-bg dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-700 text-zinc-900 dark:text-zinc-100"
                   />
                   {searchLoading && (
                     <span className="absolute right-2.5 top-2 w-3.5 h-3.5 border border-zinc-500 border-t-transparent rounded-full animate-spin" />
@@ -714,8 +714,8 @@ export default function ChatPage() {
                       }}
                       className={`w-full flex items-center gap-3.5 px-5 py-2.5 transition-all text-left cursor-pointer border-r-2 border-transparent ${
                         isSelected
-                          ? 'bg-zinc-50 dark:bg-zinc-900/60 font-extrabold'
-                          : 'hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
+                          ? 'bg-grey-bg dark:bg-zinc-900/60 font-extrabold'
+                          : 'hover:bg-grey-hover/50 dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
                       <Avatar avatarUrl={null} username={dmUsername} sizeClass="w-10 h-10" textSizeClass="text-sm font-bold" />

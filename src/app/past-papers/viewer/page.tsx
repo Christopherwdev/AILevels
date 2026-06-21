@@ -192,6 +192,7 @@ function ViewerContent() {
     // New state for mobile options popup
     const [showMobileOptions, setShowMobileOptions] = useState<boolean>(false);
     const [isMobile, setIsMobile] = useState<boolean>(false);
+    const [isIOS, setIsIOS] = useState<boolean>(false);
 
     // Helper Functions
     const getUrlParams = useCallback((): PaperData => {
@@ -426,11 +427,20 @@ function ViewerContent() {
 
 
 
-    // Mobile size detection effect
+    // Mobile and iOS size detection effect
     useEffect(() => {
         checkMobileSize();
         const handleResize = () => checkMobileSize();
         window.addEventListener('resize', handleResize);
+
+        const checkIOS = () => {
+            const ua = window.navigator.userAgent;
+            const ipad = ua.match(/(iPad)/g) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+            const iphone = ua.match(/(iPhone)/g);
+            setIsIOS(!!(ipad || iphone));
+        };
+        checkIOS();
+
         return () => window.removeEventListener('resize', handleResize);
     }, [checkMobileSize]);
 
@@ -445,6 +455,14 @@ function ViewerContent() {
             return () => clearTimeout(t);
         }
     }, [writtenAnswers, paperData.subject, paperData.paper, paperData.series, paperData.year]);
+
+    const getIframeSrc = useCallback((originalUrl: string) => {
+        if (!originalUrl) return '';
+        if (isIOS) {
+            return `https://docs.google.com/viewer?url=${encodeURIComponent(originalUrl)}&embedded=true`;
+        }
+        return `${originalUrl}#toolbar=0&navpanes=0&zoom=70&view=FitH`;
+    }, [isIOS]);
 
     // Render logic for panel visibility
     const renderPanelLayout = () => {
@@ -489,33 +507,19 @@ function ViewerContent() {
                 <div id="qp-panel" className={qpPanelClasses}>
                     {currentMode === 'reviewPaper' && currentLayout === 'splitScreen' && showWrittenAnswersInReview ? (
                         <div className="w-full h-full flex flex-col bg-white dark:bg-zinc-900">
-                            <div className="flex border-b border-zinc-200 dark:border-zinc-800/80 items-center justify-between px-4 py-2 bg-zinc-50/50 dark:bg-zinc-950/10">
-                                <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                                    <Edit3 size={13} className="text-blue-500" />
-                                    Your Answers
-                                </div>
-                                <button
-                                    onClick={() => setWrittenAnswers('')}
-                                    className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded-md transition-colors cursor-pointer"
-                                >
-                                    Clear Notepad
-                                </button>
-                            </div>
-                            <div className="flex-grow bg-white dark:bg-zinc-900">
-                                <textarea 
-                                    className="w-full h-full p-4 resize-none focus:outline-none border-0 focus:ring-0 bg-transparent dark:text-zinc-100 font-sans"
-                                    placeholder="Write your answers here..."
-                                    value={writtenAnswers}
-                                    onChange={handleWrittenAnswersChange}
-                                />
-                            </div>
+                            <textarea 
+                                className="w-full h-full p-4 resize-none focus:outline-none border-0 focus:ring-0 bg-transparent dark:text-zinc-100 font-sans"
+                                placeholder="Write your answers here..."
+                                value={writtenAnswers}
+                                onChange={handleWrittenAnswersChange}
+                            />
                         </div>
                     ) : (
                         <iframe 
                             ref={iframeRef}
                             id="qp-iframe" 
                             className="pdf-frame w-full h-full" 
-                            src={qpPdfUrl}
+                            src={getIframeSrc(qpPdfUrl)}
                             title="Question Paper"
                         ></iframe>
                     )}
@@ -524,25 +528,6 @@ function ViewerContent() {
                 <div id="right-panel" className={rightPanelClasses}>
                     {showAnswerTextarea && (
                         <div className="w-full h-full flex flex-col bg-white dark:bg-zinc-900">
-                            <div className="flex justify-between items-center px-4 py-2 border-b border-zinc-150 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-950/10">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-xs font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                                        <Edit3 size={13} className="text-blue-500" />
-                                        Draft Answers
-                                    </h3>
-                                    {showSaveIndicator && (
-                                        <span className="text-[10px] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                            <CheckCircle size={10} /> Auto-Saved
-                                        </span>
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => setWrittenAnswers('')}
-                                    className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded-md transition-colors cursor-pointer"
-                                >
-                                    Clear
-                                </button>
-                            </div>
                             <textarea 
                                 className="flex-grow p-4 resize-none focus:outline-none border-0 focus:ring-0 bg-transparent dark:text-zinc-100 font-sans"
                                 placeholder="Type or format your answers here..."
@@ -556,7 +541,7 @@ function ViewerContent() {
                             ref={msIframeRef}
                             id="ms-iframe" 
                             className="pdf-frame w-full h-full" 
-                            src={msPdfUrl}
+                            src={getIframeSrc(msPdfUrl)}
                         ></iframe>
                     )}
                 </div>
@@ -597,9 +582,9 @@ function ViewerContent() {
             </style>
 
             {/* Top Navbar */}
-            <header className="h-12 bg-white dark:bg-black border-b border-zinc-200 dark:border-zinc-800 px-4 flex justify-between items-center sticky top-0 z-50 flex-shrink-0">
+            <header className="h-12 bg-white dark:bg-black border-b border-zinc-200 dark:border-zinc-800 px-2 flex justify-between items-center sticky top-0 z-50 flex-shrink-0">
                 {/* Header Left */}
-                <div className="flex items-center gap-3">
+                <div className="flex-1 flex items-center gap-3 min-w-0">
                     <button 
                         onClick={() => window.close()} 
                         className="flex items-center gap-1 px-2.5 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-xs font-bold transition cursor-pointer text-zinc-700 dark:text-zinc-300 h-8"
@@ -607,8 +592,8 @@ function ViewerContent() {
                         <ArrowLeft size={13} />
                         Exit
                     </button>
-                    <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden sm:block"></div>
-                    <div className="flex flex-col hidden sm:flex">
+                    <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden lg:block"></div>
+                    <div className="flex flex-col hidden lg:flex">
                         <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider leading-none">
                             {currentMode === 'doPaper' ? 'Active Exam Sitting' : 'Evaluation Mode'}
                         </span>
@@ -619,7 +604,7 @@ function ViewerContent() {
                 </div>
 
                 {/* Header Middle - Unified Status & Control Dock */}
-                <div className="flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5 shadow-sm h-8">
+                <div className="flex-shrink-0 flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5 shadow-sm h-8">
                     {/* Timer Controls */}
                     <div className="flex items-center gap-1 px-1.5 border-r border-zinc-200 dark:border-zinc-800 h-full">
                         <span className="timer-display text-xs font-mono font-bold text-zinc-750 dark:text-zinc-300 select-none">
@@ -694,7 +679,7 @@ function ViewerContent() {
                 </div>
 
                 {/* Header Right */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex-1 flex items-center justify-end gap-1.5 min-w-0">
                     {/* Audio Overlay Button (for Chinese Listening papers) */}
                     {showAudioPlayerButton && (
                         <button
@@ -717,7 +702,7 @@ function ViewerContent() {
                             }`}
                         >
                             <Edit3 size={11} />
-                            <span>Answers Left</span>
+                            <span>My Answers</span>
                         </button>
                     )}
 
@@ -726,7 +711,7 @@ function ViewerContent() {
                         className="h-8 flex items-center gap-1 px-2.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-850 dark:hover:bg-zinc-200 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm"
                     >
                         <Download size={12} />
-                        Get PDF
+                        <span className="hidden lg:inline">Get PDF</span>
                     </button>
                 </div>
             </header>

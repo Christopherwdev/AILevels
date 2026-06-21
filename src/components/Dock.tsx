@@ -10,12 +10,32 @@ export default function Dock() {
   const supabase = createClient();
   const { isOpen, isMinimized, activeNoteId, dockingEnabled, openNote } = useOverlay();
   const [mostRecentNoteId, setMostRecentNoteId] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const pathname = usePathname();
+
+  // Check auth state
+  useEffect(() => {
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setLoading(false);
+    }
+    checkUser();
+
+    // Subscribe to auth state changes to update the Dock dynamically
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   // Fetch the most recent note to open by default if none is active
   useEffect(() => {
     async function fetchMostRecent() {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase
         .from('notes')
@@ -27,12 +47,13 @@ export default function Dock() {
         setMostRecentNoteId(data.id);
       }
     }
-    if (dockingEnabled && !isOpen) {
+    if (dockingEnabled && !isOpen && user) {
       fetchMostRecent();
     }
-  }, [dockingEnabled, isOpen]);
+  }, [dockingEnabled, isOpen, user, supabase]);
 
   // All hooks must be called before any conditional returns
+  if (loading || !user) return null;
   if (pathname === '/chat' || pathname === '/notes') return null;
   if (!dockingEnabled || (isOpen && !isMinimized)) return null;
 
@@ -45,7 +66,7 @@ export default function Dock() {
     <div className="fixed bottom-6 right-6 z-[80] flex items-center justify-end pointer-events-auto">
       <button
         onClick={handleOpen}
-        className="w-10 h-10 flex items-center justify-center gap-2  bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all cursor-pointer font-bold text-xs uppercase tracking-wider hover:opacity-90 active:scale-95"
+        className="w-10 h-10 flex items-center justify-center gap-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all cursor-pointer font-bold text-xs uppercase tracking-wider hover:opacity-90 active:scale-95"
         title="Open Note Editor"
       >
         <NotebookText size={20} />

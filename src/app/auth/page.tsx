@@ -40,9 +40,6 @@ export default function AuthPage() {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: 'https://precisionedu.org'
-          }
         });
 
         if (signUpError) {
@@ -50,8 +47,18 @@ export default function AuthPage() {
         } else if (data?.user?.identities?.length === 0) {
           setError('This email is already registered. Try logging in.');
         } else {
-          setMessage('Successfully signed up! Please check your email if confirmation is enabled, or log in.');
-          setIsSignUp(false);
+          // Auto sign in on successful sign up
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (signInError) {
+            setMessage('Account created! Please check your email to confirm and log in.');
+          } else {
+            router.push('/dashboard');
+            router.refresh();
+          }
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
