@@ -162,7 +162,7 @@ export default function NotesPage() {
 
   if (loading) {
     return (
-      <div className="h-[calc(100dvh-4rem)] flex items-center justify-center bg-white dark:bg-zinc-950">
+      <div className="h-[calc(100vh-4rem)] mobile-h-dvh flex items-center justify-center bg-white dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-2">
           <div className="w-8 h-8 rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-800 dark:border-t-zinc-100 animate-spin" />
           <p className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">Loading notes...</p>
@@ -172,7 +172,7 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="h-[calc(100dvh-4rem)] flex flex-col md:flex-row bg-white dark:bg-zinc-950 overflow-hidden font-sans relative">
+    <div className="h-[calc(100vh-4rem)] mobile-h-dvh flex flex-col md:flex-row bg-white dark:bg-zinc-950 overflow-hidden font-sans relative">
 
       {/* ── MOBILE: Backdrop ── */}
       {isSidebarOpen && (

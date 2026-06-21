@@ -1189,6 +1189,7 @@ export default function App() {
             <style>{`
                 .table-container {
                     max-width: 100%;
+                    height: calc(100vh - 160px);
                     height: calc(100dvh - 160px);
                     overflow: auto;
                     overscroll-behavior: none;
@@ -1200,6 +1201,7 @@ export default function App() {
                 
                 @media (min-width: 1024px) {
                     .table-container {
+                        height: calc(100vh - 165px);
                         height: calc(100dvh - 165px);
                     }
                 }

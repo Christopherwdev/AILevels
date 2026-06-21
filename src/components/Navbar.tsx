@@ -8,6 +8,7 @@ import { ensureUserProfile } from '@/utils/supabase/profile-helper';
 import { subjects, getSubjectIcon } from '@/utils/subjects';
 import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Settings, BookOpen, MessageCircle, GraduationCap, NotebookText, Menu, X } from 'lucide-react';
 import Avatar from '@/components/Avatar';
+import { useOverlay } from '@/context/OverlayContext';
 
 interface NavbarProps {
   userEmail: string | null;
@@ -24,7 +25,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const learnMenuRef = useRef<HTMLDivElement>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isSidebarOpen, setIsSidebarOpen } = useOverlay();
 
   const handleSignOut = async () => {
     setIsUserMenuOpen(false);

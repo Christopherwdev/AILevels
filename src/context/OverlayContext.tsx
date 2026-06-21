@@ -12,6 +12,7 @@ interface OverlayContextType {
   width: number;
   height: number;
   maximized: boolean;
+  isSidebarOpen: boolean;
   setDockingEnabled: (enabled: boolean) => void;
   openNote: (noteId: string) => void;
   closeNote: () => void;
@@ -20,6 +21,7 @@ interface OverlayContextType {
   updatePosition: (x: number, y: number) => void;
   updateSize: (w: number, h: number) => void;
   setActiveNoteId: (id: string | null) => void;
+  setIsSidebarOpen: (open: boolean) => void;
 }
 
 const OverlayContext = createContext<OverlayContextType | undefined>(undefined);
@@ -30,6 +32,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [dockingEnabled, setDockingEnabled] = useState(true);
   const [maximized, setMaximized] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Position and size states
   const [x, setX] = useState(100);
@@ -125,6 +128,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
       width,
       height,
       maximized,
+      isSidebarOpen,
       setDockingEnabled,
       openNote,
       closeNote,
@@ -132,7 +136,8 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
       setMaximized,
       updatePosition,
       updateSize,
-      setActiveNoteId
+      setActiveNoteId,
+      setIsSidebarOpen
     }}>
       {children}
     </OverlayContext.Provider>

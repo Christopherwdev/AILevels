@@ -187,4 +187,8 @@ html, body, .overflow-y-auto, .overflow-auto, [class*="overflow-"] {
   animation: cursor-blink 0.8s infinite;
 }
 
-
+@media (max-width: 768px) {
+  .mobile-h-dvh {
+    height: calc(100dvh - 4rem) !important;
+  }
+}
