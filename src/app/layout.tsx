@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import OverlayWrapper from "@/components/OverlayWrapper";
 import { createClient } from "@/utils/supabase/server";
 
 const geistSans = Geist({
@@ -35,9 +36,12 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
-        <Navbar userEmail={user?.email || null} />
-        <main className="flex-1 flex flex-col">{children}</main>
+        <OverlayWrapper>
+          <Navbar userEmail={user?.email || null} />
+          <main className="flex-1 flex flex-col">{children}</main>
+        </OverlayWrapper>
       </body>
     </html>
   );
 }
+

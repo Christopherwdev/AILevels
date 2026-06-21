@@ -331,15 +331,19 @@ export default function PastPapersPage() {
         if (paper.isComingSoon) return;
 
         if (type === 'qp' || type === 'ms') {
-            const params = new URLSearchParams({
+            const queryParams = new URLSearchParams({
                 subject: paper.subject,
                 paper: paper.paper,
                 series: paper.series,
                 year: paper.year.toString(),
                 examBoard: examBoard,
-                examLevel: examLevel
+                examLevel: examLevel,
+                type: type
             }).toString();
-            window.open(`/past-papers/viewer?${params}&type=${type}`, '_blank');
+
+            if (typeof window !== 'undefined') {
+                window.open(`/past-papers/viewer?${queryParams}`, '_blank');
+            }
         } else if (type === 'share') {
             const shareParams = new URLSearchParams({
                 examBoard: paper.examBoard,

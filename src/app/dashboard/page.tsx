@@ -605,16 +605,19 @@ export default function App() {
         const { subject, paper, year, series, mode: examLevel } = activeCellData;
         const examBoard = "Edexcel";
 
-        const params = new URLSearchParams({
+        const queryParams = new URLSearchParams({
             subject: subject,
             paper: paper,
             series: series,
             year: year.toString(),
             examBoard: examBoard,
-            examLevel: examLevel
+            examLevel: examLevel,
+            type: type
         }).toString();
 
-        window.open(`/past-papers/viewer?${params}&type=${type}`, '_blank');
+        if (typeof window !== 'undefined') {
+            window.open(`/past-papers/viewer?${queryParams}`, '_blank');
+        }
     }, [activeCellData]);
 
     const hideBottomActions = useCallback(() => {
@@ -1133,10 +1136,12 @@ export default function App() {
                                     {/* Open past papers */}
                                     <div className="pt-1">
                                         <button
-                                            onClick={() => {
-                                                const params = new URLSearchParams({ subject, paper, examBoard: 'Edexcel', examLevel: currentMode });
-                                                window.open(`/past-papers?${params}`, '_blank');
-                                            }}
+                                             onClick={() => {
+                                                 if (typeof window !== 'undefined') {
+                                                     const targetWindow = (window.parent && window.parent !== window) ? window.parent : window;
+                                                     targetWindow.postMessage({ type: 'OPEN_PAST_PAPERS_DASHBOARD' }, '*');
+                                                 }
+                                             }}
                                             className="w-full btn-notion-white text-center"
                                             style={{ fontSize: '10px' }}
                                         >

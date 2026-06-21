@@ -187,6 +187,76 @@ export default function CalendarPage() {
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-955 text-zinc-900 dark:text-zinc-100 flex flex-col p-0 md:p-0">
+      {/* Floating Collapsible Control Panel (Overlayed at bottom right) */}
+            {isPanelOpen && (
+              <aside className="absolute bottom-[84px] right-[24px] z-30 w-[calc(100%-3rem)] sm:w-72 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl p-4 shadow-xl flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                    <Paintbrush size={13} className="text-blue-500" />
+                    <span>Highlight</span>
+                  </div>
+                  <button
+                    onClick={() => setIsPanelOpen(false)}
+                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer text-zinc-400 hover:text-zinc-650"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  <button 
+                    onClick={() => setActivePaintColor('none')}
+                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'none' 
+                        ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black' 
+                        : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-650 dark:text-zinc-300'
+                    }`}
+                    title="Brush Eraser"
+                  >
+                    Clear
+                  </button>
+                  <button 
+                    onClick={() => setActivePaintColor('green')}
+                    style={{ backgroundColor: '#53D769', color: '#fff' }}
+                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'green' ? 'ring-2 ring-[#53D769] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    }`}
+                    title="Study (Green)"
+                  >
+                    Study
+                  </button>
+                  <button 
+                    onClick={() => setActivePaintColor('red')}
+                    style={{ backgroundColor: '#FC3D39', color: '#fff' }}
+                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'red' ? 'ring-2 ring-[#FC3D39] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    }`}
+                    title="Exam (Red)"
+                  >
+                    Exam
+                  </button>
+                  <button 
+                    onClick={() => setActivePaintColor('blue')}
+                    style={{ backgroundColor: '#147EFB', color: '#fff' }}
+                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'blue' ? 'ring-2 ring-[#147EFB] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    }`}
+                    title="Revise (Blue)"
+                  >
+                    Revise
+                  </button>
+                  <button 
+                    onClick={() => setActivePaintColor('yellow')}
+                    style={{ backgroundColor: '#FFCC00', color: '#fff' }}
+                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                      activePaintColor === 'yellow' ? 'ring-2 ring-[#FFCC00] ring-offset-1 dark:ring-offset-zinc-900' : ''
+                    }`}
+                    title="Rest (Yellow)"
+                  >
+                    Rest
+                  </button>
+                </div>
+              </aside>
+            )}
       <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col min-h-0 relative">
 
         {loading ? (
@@ -311,76 +381,7 @@ export default function CalendarPage() {
               </button>
             )}
 
-            {/* Floating Collapsible Control Panel (Overlayed at bottom right) */}
-            {isPanelOpen && (
-              <aside className="absolute bottom-6 right-6 z-30 w-[calc(100%-3rem)] sm:w-72 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl p-4 shadow-xl flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                    <Paintbrush size={13} className="text-blue-500" />
-                    <span>Highlight Brush</span>
-                  </div>
-                  <button
-                    onClick={() => setIsPanelOpen(false)}
-                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer text-zinc-400 hover:text-zinc-650"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-                <div className="grid grid-cols-5 gap-1.5">
-                  <button 
-                    onClick={() => setActivePaintColor('none')}
-                    className={`h-7 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
-                      activePaintColor === 'none' 
-                        ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black' 
-                        : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-650 dark:text-zinc-300'
-                    }`}
-                    title="Brush Eraser"
-                  >
-                    Clear
-                  </button>
-                  <button 
-                    onClick={() => setActivePaintColor('green')}
-                    style={{ backgroundColor: '#53D769', color: '#fff' }}
-                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
-                      activePaintColor === 'green' ? 'ring-2 ring-[#53D769] ring-offset-1 dark:ring-offset-zinc-900' : ''
-                    }`}
-                    title="Study (Green)"
-                  >
-                    Study
-                  </button>
-                  <button 
-                    onClick={() => setActivePaintColor('red')}
-                    style={{ backgroundColor: '#FC3D39', color: '#fff' }}
-                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
-                      activePaintColor === 'red' ? 'ring-2 ring-[#FC3D39] ring-offset-1 dark:ring-offset-zinc-900' : ''
-                    }`}
-                    title="Exam (Red)"
-                  >
-                    Exam
-                  </button>
-                  <button 
-                    onClick={() => setActivePaintColor('blue')}
-                    style={{ backgroundColor: '#147EFB', color: '#fff' }}
-                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
-                      activePaintColor === 'blue' ? 'ring-2 ring-[#147EFB] ring-offset-1 dark:ring-offset-zinc-900' : ''
-                    }`}
-                    title="Revise (Blue)"
-                  >
-                    Revise
-                  </button>
-                  <button 
-                    onClick={() => setActivePaintColor('yellow')}
-                    style={{ backgroundColor: '#FFCC00', color: '#fff' }}
-                    className={`h-7 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
-                      activePaintColor === 'yellow' ? 'ring-2 ring-[#FFCC00] ring-offset-1 dark:ring-offset-zinc-900' : ''
-                    }`}
-                    title="Rest (Yellow)"
-                  >
-                    Rest
-                  </button>
-                </div>
-              </aside>
-            )}
+            
           </div>
         )}
       </div>

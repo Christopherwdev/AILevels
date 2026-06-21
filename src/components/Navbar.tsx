@@ -4,9 +4,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Settings, BookOpen, MessageCircle, GraduationCap } from 'lucide-react';
+import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Settings, BookOpen, MessageCircle, GraduationCap, NotebookText } from 'lucide-react';
 import { ensureUserProfile } from '@/utils/supabase/profile-helper';
 import { subjects, getSubjectIcon } from '@/utils/subjects';
+import { useOverlay } from '@/context/OverlayContext';
 
 interface NavbarProps {
   userEmail: string | null;
@@ -22,6 +23,46 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const [username, setUsername] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const learnMenuRef = useRef<HTMLDivElement>(null);
+  const [isEmbedded, setIsEmbedded] = useState(false);
+  const overlay = useOverlay();
+
+  const [isNotesMenuOpen, setIsNotesMenuOpen] = useState(false);
+  const [recentNotes, setRecentNotes] = useState<any[]>([]);
+  const notesMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.self !== window.top) {
+      setIsEmbedded(true);
+    }
+  }, []);
+
+  // Close notes menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notesMenuRef.current && !notesMenuRef.current.contains(e.target as Node)) {
+        setIsNotesMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleToggleNotesMenu = async () => {
+    const nextState = !isNotesMenuOpen;
+    setIsNotesMenuOpen(nextState);
+    if (nextState && userEmail) {
+      const { data } = await supabase
+        .from('notes')
+        .select('id, title, color')
+        .order('updated_at', { ascending: false })
+        .limit(5);
+      if (data) {
+        setRecentNotes(data);
+      }
+    }
+  };
+
+
 
   // Fetch username dynamically
   useEffect(() => {
@@ -79,6 +120,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  if (isEmbedded) return null;
 
   const renderAvatar = (urlOrGradient: string | null, sizeClass = "h-6 w-6") => {
     if (!urlOrGradient) {
@@ -168,7 +210,10 @@ export default function Navbar({ userEmail }: NavbarProps) {
                   </button>
 
                   {isLearnMenuOpen && (
-                    <div className="absolute left-0 mt-3 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-50 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
+                    <>
+                      {/* Dropdown Backdrop */}
+                      <div className="fixed inset-0 z-[90] bg-transparent cursor-default animate-none" onClick={() => setIsLearnMenuOpen(false)} />
+                      <div className="absolute left-0 mt-3 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-[100] shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
                       <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IAL Subjects</div>
                       {subjects.filter(s => s.level === 'IAL').map(s => {
                         const ItemIcon = getSubjectIcon(s.iconName);
@@ -205,6 +250,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                         );
                       })}
                     </div>
+                    </>
                   )}
                 </div>
 
@@ -216,16 +262,11 @@ export default function Navbar({ userEmail }: NavbarProps) {
                   <MessageCircle size={14} />
                   Chat
                 </Link>
+                
                 <Link href="/notes" className={navLinkClass('/notes')}>
                   <FileText size={14} />
                   Notes
                 </Link>
-                {/* Tutors (Hidden for now)
-                <Link href="/tutors" className={navLinkClass('/tutors')}>
-                  <GraduationCap size={14} />
-                  Tutors
-                </Link>
-                */}
               </div>
             )}
           </div>

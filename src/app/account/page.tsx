@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { User, Shield, Key, Database, ArrowLeft, CheckCircle2, Globe, Sparkles, Sun, Moon, LogOut } from 'lucide-react';
+import { User, Shield, Key, Database, ArrowLeft, CheckCircle2, Globe, Sparkles, Sun, Moon, LogOut, ToggleLeft, ToggleRight, Laptop, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { ensureUserProfile, DEFAULT_AVATARS, UserProfile } from '@/utils/supabase/profile-helper';
+import { useOverlay } from '@/context/OverlayContext';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -32,6 +33,12 @@ export default function AccountPage() {
   // Database stats state
   const [stats, setStats] = useState({ scoresCount: 0, calendarNotesCount: 0 });
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Active section state
+  const [activeSection, setActiveSection] = useState<string>('account');
+
+  // Overlay context
+  const { dockingEnabled, setDockingEnabled } = useOverlay();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -76,7 +83,7 @@ export default function AccountPage() {
         setIsFallback(fallback);
       }
 
-      // Load Statistics (Count how many dashboard scores / calendar entries exist)
+      // Load Statistics
       try {
         const { data: scores } = await supabase
           .from('dashboard_scores')
@@ -124,7 +131,6 @@ export default function AccountPage() {
       return;
     }
 
-    // Clean username (alphanumeric and underscores only, lowercase)
     const cleanUsername = usernameInput.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
 
     const updatedProfile: UserProfile = {
@@ -212,24 +218,48 @@ export default function AccountPage() {
     );
   };
 
+  const menuSections = [
+    {
+      title: "General",
+      items: [
+        { id: "account", label: "Account" },
+        { id: "permissions", label: "Permissions" },
+        { id: "appearance", label: "Appearance" },
+        { id: "notifications", label: "Notifications" },
+        { id: "models", label: "Models" },
+        { id: "customizations", label: "Customizations" },
+        { id: "browser", label: "Browser" },
+        { id: "tab", label: "Tab" },
+        { id: "editor", label: "Editor" }
+      ]
+    },
+    {
+      title: "Workspaces",
+      items: [
+        { id: "ailevels", label: "AILevels" },
+        { id: "offlineai2", label: "OfflineAI-2" }
+      ]
+    }
+  ];
+
   return (
-    <div className="flex-1 w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-0 flex flex-col p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl w-full mx-auto space-y-6">
+    <div className="flex-1 w-full bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-0 flex flex-col p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="max-w-6xl w-full mx-auto space-y-6">
         
         {/* Navigation and Actions Row */}
         <div className="flex items-center justify-between">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 text-sm text-zinc-500 hover:text-black dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-black dark:hover:text-white transition-colors"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={14} />
             Back to Dashboard
           </Link>
           <div className="flex items-center gap-2">
             {profile && (
               <Link
                 href={`/user/${profile.username}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded text-xs font-bold transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded text-xs font-bold transition-all uppercase tracking-wider"
               >
                 <Globe size={14} />
                 View Public Profile
@@ -237,7 +267,7 @@ export default function AccountPage() {
             )}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 dark:border-red-950/20 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded text-xs font-bold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 dark:border-red-950/20 text-red-655 hover:bg-red-50 dark:hover:bg-red-955/20 rounded text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
             >
               <LogOut size={14} />
               Sign Out
@@ -245,309 +275,383 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Profile & Account Settings</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Customize your public Precision Edu card and secure your login details.
-          </p>
-        </div>
-
-        {isFallback && (
-          <div className="p-4 text-xs border border-amber-200/80 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 text-amber-800 dark:text-amber-300 rounded flex flex-col gap-1.5">
-            <span className="font-bold flex items-center gap-1"><Sparkles size={13} /> Supabase Database Notice</span>
-            <p>
-              Your database has not been migrated to support the <strong>profiles</strong> table yet. 
-              Changes will save to your browser's local storage instead. 
-              Execute the SQL script in your Supabase SQL Editor to make your profile visible to other students!
-            </p>
-          </div>
-        )}
-
-        <div className="grid md:grid-cols-3 gap-6">
+        {/* Master Two-Pane Layout */}
+        <div className="flex flex-col md:flex-row gap-8 bg-zinc-50/50 dark:bg-zinc-900/10 border border-zinc-200 dark:border-zinc-900 rounded-xl overflow-hidden min-h-[650px] shadow-sm">
           
-          {/* LEFT PANELS: PROFILE EDITING & SECURITY */}
-          <div className="md:col-span-2 space-y-6">
+          {/* LEFT SIDEBAR: SECTIONS */}
+          <aside className="w-full md:w-60 bg-zinc-50 dark:bg-[#14161b] border-r border-zinc-200 dark:border-zinc-900 p-4 shrink-0 flex flex-col space-y-6">
+            {menuSections.map((section) => (
+              <div key={section.title} className="space-y-1.5">
+                <div className="px-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 select-none">
+                  {section.title}
+                </div>
+                <div className="flex flex-col space-y-0.5">
+                  {section.items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveSection(item.id)}
+                      className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide cursor-pointer transition-all ${
+                        activeSection === item.id
+                          ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 font-black'
+                          : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </aside>
+
+          {/* RIGHT PANEL: SETTINGS DETAILS */}
+          <main className="flex-1 p-6 md:p-8 overflow-y-auto max-h-[750px]">
             
-            {/* PROFILE SECTION */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-5">
-              <div className="flex items-center gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400">
-                  <User size={20} />
-                </div>
+            {/* 1. ACCOUNT SECTION */}
+            {activeSection === 'account' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
                 <div>
-                  <h3 className="font-bold">Public Card Identity</h3>
-                  <p className="text-xs text-zinc-500">Edit how other students see your profile</p>
+                  <h2 className="text-xl font-black uppercase tracking-wide text-zinc-900 dark:text-zinc-100">Profile Settings</h2>
+                  <p className="text-xs text-zinc-400 mt-1">Configure your public Precision Edu identity card and credentials.</p>
                 </div>
-              </div>
 
-              {profileError && (
-                <div className="p-4 text-xs bg-red-50 border border-red-200 text-red-700 dark:bg-red-955/20 dark:border-red-900 dark:text-red-300 rounded">
-                  {profileError}
-                </div>
-              )}
+                {isFallback && (
+                  <div className="p-4 text-xs border border-amber-200/80 bg-amber-50 dark:bg-amber-955/10 dark:border-amber-900 text-amber-800 dark:text-amber-300 rounded flex flex-col gap-1.5">
+                    <span className="font-bold flex items-center gap-1"><Sparkles size={13} /> Supabase Database Notice</span>
+                    <p>Your database profile table is not available yet. Changes will persist inside local storage.</p>
+                  </div>
+                )}
 
-              {profileMessage && (
-                <div className="p-4 text-xs bg-green-50 border border-green-200 text-green-700 dark:bg-green-955/20 dark:border-green-900 dark:text-green-300 rounded flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-green-600" />
-                  {profileMessage}
-                </div>
-              )}
+                <div className="grid lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* Identity card edit */}
+                    <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-5 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-900">
+                        <User size={18} className="text-zinc-455" />
+                        <h3 className="font-bold text-xs uppercase tracking-wide">Public Card Identity</h3>
+                      </div>
 
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                
-                {/* Profile Picture / Avatar Editor */}
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center py-2">
-                  {renderAvatar(avatarInput, "h-16 w-16")}
-                  <div className="space-y-2 flex-1 w-full">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400">Select Profile Color Presets</label>
-                    <div className="flex flex-wrap gap-2">
-                      {DEFAULT_AVATARS.map((gradient, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => setAvatarInput(gradient)}
-                          className={`h-7 w-7 rounded-full cursor-pointer transition-all border ${avatarInput === gradient ? 'ring-2 ring-zinc-900 dark:ring-zinc-100 border-transparent scale-105' : 'border-zinc-200 dark:border-zinc-800 hover:scale-105'}`}
-                          style={{ background: gradient }}
-                          title={`Preset Gradient ${index + 1}`}
-                        />
-                      ))}
+                      {profileError && <div className="p-3 text-xs bg-red-50 text-red-700 dark:bg-red-955/10 dark:text-red-300 rounded">{profileError}</div>}
+                      {profileMessage && (
+                        <div className="p-3 text-xs bg-green-50 text-green-700 dark:bg-green-955/10 dark:text-green-300 rounded flex items-center gap-1.5">
+                          <CheckCircle2 size={14} className="text-green-600" />
+                          {profileMessage}
+                        </div>
+                      )}
+
+                      <form onSubmit={handleUpdateProfile} className="space-y-4">
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center py-2">
+                          {renderAvatar(avatarInput, "h-14 w-14")}
+                          <div className="space-y-1.5 flex-1 w-full">
+                            <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400">Profile Presets</label>
+                            <div className="flex flex-wrap gap-1.5">
+                              {DEFAULT_AVATARS.map((gradient, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => setAvatarInput(gradient)}
+                                  className={`h-6 w-6 rounded-full cursor-pointer transition-all border ${avatarInput === gradient ? 'ring-2 ring-zinc-900 dark:ring-zinc-100 border-transparent scale-105' : 'border-zinc-200 dark:border-zinc-800 hover:scale-105'}`}
+                                  style={{ background: gradient }}
+                                />
+                              ))}
+                            </div>
+                            <div className="pt-1">
+                              <input
+                                type="url"
+                                value={avatarInput.startsWith('linear-gradient') ? '' : avatarInput}
+                                onChange={(e) => setAvatarInput(e.target.value)}
+                                placeholder="Or paste custom image URL..."
+                                className="w-full px-3 py-1 border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 text-xs rounded focus:outline-none focus:border-zinc-400"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Username Handle</label>
+                            <input
+                              type="text"
+                              value={usernameInput}
+                              onChange={(e) => setUsernameInput(e.target.value)}
+                              className="w-full px-3 py-2 rounded border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 text-xs focus:outline-none focus:border-zinc-400"
+                              placeholder="student_hero"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Email (Private)</label>
+                            <div className="px-3 py-2 rounded border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-900 text-xs font-semibold text-zinc-400 truncate">
+                              {email || 'student@precisionedu.io'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Bio Description</label>
+                          <textarea
+                            value={bioInput}
+                            onChange={(e) => setBioInput(e.target.value)}
+                            rows={2}
+                            className="w-full px-3 py-2 rounded border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 text-xs focus:outline-none focus:border-zinc-400 resize-none"
+                            placeholder="Tell other students about your goals..."
+                          />
+                        </div>
+
+                        <button type="submit" disabled={isSavingProfile} className="btn-notion-black font-bold text-[10px] uppercase tracking-wider px-4 py-2 cursor-pointer">
+                          {isSavingProfile ? 'Saving...' : 'Save Profile'}
+                        </button>
+                      </form>
                     </div>
-                    <div className="pt-1">
-                      <input
-                        type="url"
-                        value={avatarInput.startsWith('linear-gradient') ? '' : avatarInput}
-                        onChange={(e) => setAvatarInput(e.target.value)}
-                        placeholder="Or paste custom image URL (e.g. from Discord or Unsplash)..."
-                        className="w-full px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs focus:outline-none focus:border-zinc-400"
-                      />
+
+                    {/* Security section */}
+                    <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-5 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-900">
+                        <Key size={18} className="text-zinc-455" />
+                        <h3 className="font-bold text-xs uppercase tracking-wide">Security</h3>
+                      </div>
+
+                      {passwordError && <div className="p-3 text-xs bg-red-50 text-red-700 dark:bg-red-955/10 dark:text-red-300 rounded">{passwordError}</div>}
+                      {passwordMessage && (
+                        <div className="p-3 text-xs bg-green-50 text-green-700 dark:bg-green-955/10 dark:text-green-300 rounded flex items-center gap-1.5">
+                          <CheckCircle2 size={14} className="text-green-600" />
+                          {passwordMessage}
+                        </div>
+                      )}
+
+                      <form onSubmit={handleUpdatePassword} className="space-y-4">
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">New Password</label>
+                            <input
+                              type="password"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="w-full px-3 py-2 rounded border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 text-xs focus:outline-none"
+                              placeholder="••••••••"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Confirm Password</label>
+                            <input
+                              type="password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className="w-full px-3 py-2 rounded border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 text-xs focus:outline-none"
+                              placeholder="••••••••"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <button type="submit" disabled={loadingPassword} className="btn-notion-blue px-4 py-2 text-[10px] font-bold uppercase tracking-wider cursor-pointer">
+                          {loadingPassword ? 'Updating...' : 'Update Password'}
+                        </button>
+                      </form>
                     </div>
                   </div>
-                </div>
 
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-zinc-500 mb-1">
-                      Username (Precision Edu handle)
-                    </label>
-                    <input
-                      type="text"
-                      value={usernameInput}
-                      onChange={(e) => setUsernameInput(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-700 text-sm"
-                      placeholder="e.g. student_hero"
-                      required
-                    />
-                    <p className="text-[10px] text-zinc-400 mt-1">Lowercase, numbers, and underscores only</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-zinc-500 mb-1">
-                      Account Email
-                    </label>
-                    <div className="px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-850 text-sm font-medium text-zinc-400 truncate">
-                      {email || 'student@precisionedu.io'}
-                    </div>
-                    <p className="text-[10px] text-zinc-400 mt-1">Primary email is private and locked</p>
-                  </div>
-                </div>
+                  {/* Sidebar stats & Preview Card */}
+                  <div className="space-y-6">
+                    {profile && (
+                      <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-5 space-y-4 text-center shadow-sm">
+                        <div className="text-[9px] font-black text-zinc-400 uppercase tracking-widest text-left">Card Preview</div>
+                        <div className="flex flex-col items-center py-1 space-y-3">
+                          {renderAvatar(avatarInput, "h-16 w-16")}
+                          <div>
+                            <div className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                              @{usernameInput.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() || 'username'}
+                            </div>
+                            <div className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">student pass</div>
+                          </div>
+                          <p className="text-xs text-zinc-500 max-w-xs line-clamp-3 italic px-1">
+                            "{bioInput || 'No bio description set yet.'}"
+                          </p>
+                          <div className="grid grid-cols-2 gap-4 w-full pt-3 border-t border-zinc-100 dark:border-zinc-900">
+                            <div>
+                              <div className="text-sm font-extrabold">{stats.scoresCount}</div>
+                              <div className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Sittings</div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-extrabold">{stats.calendarNotesCount}</div>
+                              <div className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Tasks</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-                <div>
-                  <label className="block text-xs font-bold uppercase text-zinc-500 mb-1">
-                    Bio Description
-                  </label>
-                  <textarea
-                    value={bioInput}
-                    onChange={(e) => setBioInput(e.target.value)}
-                    rows={3}
-                    className="w-full px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-955 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-700 text-sm resize-none"
-                    placeholder="Tell other students about your study goals, subjects, or revision milestones..."
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSavingProfile}
-                  className="disabled:opacity-50 btn-notion-black font-bold text-xs px-5 py-2.5 cursor-pointer uppercase tracking-wider"
-                >
-                  {isSavingProfile ? 'Saving...' : 'Save Profile Card'}
-                </button>
-              </form>
-            </div>
-
-            {/* PASSWORD UPDATE SECTION */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6">
-              <div className="flex items-center gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800 mb-4">
-                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400">
-                  <Key size={18} />
-                </div>
-                <div>
-                  <h3 className="font-bold">Security & Authentication</h3>
-                  <p className="text-xs text-zinc-500">Update your account password</p>
-                </div>
-              </div>
-
-              {passwordError && (
-                <div className="mb-4 p-4 text-xs bg-red-50 border border-red-200 text-red-700 dark:bg-red-955/20 dark:border-red-900 dark:text-red-300 rounded">
-                  {passwordError}
-                </div>
-              )}
-
-              {passwordMessage && (
-                <div className="mb-4 p-4 text-xs bg-green-50 border border-green-200 text-green-700 dark:bg-green-955/20 dark:border-green-900 dark:text-green-300 rounded flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-green-600" />
-                  {passwordMessage}
-                </div>
-              )}
-
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-zinc-500 mb-1">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-700 text-sm"
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-zinc-500 mb-1">
-                      Confirm New Password
-                    </label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-955 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-700 text-sm"
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loadingPassword}
-                  className="disabled:opacity-50 btn-notion-blue px-5 py-2.5 text-xs font-bold uppercase tracking-wider cursor-pointer"
-                >
-                  {loadingPassword ? 'Updating...' : 'Update Password'}
-                </button>
-              </form>
-            </div>
-
-            {/* THEME & APPEARANCE SECTION */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
-              <div className="flex items-center gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400">
-                  <Sun className="h-5 w-5 dark:hidden" />
-                  <Moon className="h-5 w-5 hidden dark:block" />
-                </div>
-                <div>
-                  <h3 className="font-bold">Theme & Appearance</h3>
-                  <p className="text-xs text-zinc-500">Toggle between light and dark display modes</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => handleThemeChange('light')}
-                  className={`flex-1 py-3 px-4 rounded border text-xs font-bold uppercase tracking-wider cursor-pointer text-center transition-all ${
-                    theme === 'light'
-                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black font-extrabold shadow-sm'
-                      : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-850 dark:text-zinc-400'
-                  }`}
-                >
-                  Light Mode
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleThemeChange('dark')}
-                  className={`flex-1 py-3 px-4 rounded border text-xs font-bold uppercase tracking-wider cursor-pointer text-center transition-all ${
-                    theme === 'dark'
-                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black font-extrabold shadow-sm'
-                      : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-850 dark:text-zinc-400'
-                  }`}
-                >
-                  Dark Mode
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: PREVIEW CARD & SYSTEM STATS */}
-          <div className="space-y-6">
-            
-            {/* Instagram Card Preview */}
-            {profile && (
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4 text-center">
-                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-left">Live Preview Card</div>
-                <div className="flex flex-col items-center py-2 space-y-3">
-                  {renderAvatar(avatarInput, "h-20 w-20")}
-                  <div>
-                    <div className="font-extrabold text-lg text-zinc-900 dark:text-zinc-100 flex items-center justify-center gap-1">
-                      @{usernameInput.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() || 'username'}
-                    </div>
-                    <div className="text-[10px] text-zinc-400 mt-0.5 uppercase tracking-widest font-semibold">Student card</div>
-                  </div>
-                  <p className="text-xs text-zinc-500 max-w-xs line-clamp-3 italic px-2">
-                    "{bioInput || 'No bio description set yet.'}"
-                  </p>
-                  
-                  {/* Grid of stats */}
-                  <div className="grid grid-cols-2 gap-4 w-full pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                    <div>
-                      <div className="text-lg font-extrabold">{stats.scoresCount}</div>
-                      <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Sittings</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-extrabold">{stats.calendarNotesCount}</div>
-                      <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Tasks</div>
+                    <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-5 space-y-4 shadow-sm text-xs">
+                      <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-900">
+                        <Database size={16} />
+                        <h4 className="font-bold">Sync Stats</h4>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between font-bold py-1 border-b border-zinc-50 dark:border-zinc-900">
+                          <span className="text-zinc-450 uppercase text-[9px] tracking-wide">Tracked Sittings</span>
+                          <span>{stats.scoresCount}</span>
+                        </div>
+                        <div className="flex justify-between font-bold py-1">
+                          <span className="text-zinc-455 uppercase text-[9px] tracking-wide">Calendar Notes</span>
+                          <span>{stats.calendarNotesCount}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Sync statistics */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-6">
-              <div className="flex items-center gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400">
-                  <Database size={18} />
-                </div>
+            {/* 2. APPEARANCE SECTION (Includes Theme & Docking Toggle!) */}
+            {activeSection === 'appearance' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
                 <div>
-                  <h3 className="font-bold">Sync Statistics</h3>
-                  <p className="text-xs text-zinc-500">Live database rows</p>
+                  <h2 className="text-xl font-black uppercase tracking-wide text-zinc-900 dark:text-zinc-100">Appearance</h2>
+                  <p className="text-xs text-zinc-400 mt-1">Configure layout preferences, display modes, and docking controls.</p>
                 </div>
-              </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-2 border-b border-zinc-50 dark:border-zinc-900">
-                  <span className="text-xs font-semibold text-zinc-500 uppercase">Tracked Scores</span>
-                  <span className="text-sm font-extrabold">{stats.scoresCount}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-zinc-50 dark:border-zinc-900">
-                  <span className="text-xs font-semibold text-zinc-500 uppercase">Calendar Notes</span>
-                  <span className="text-sm font-extrabold">{stats.calendarNotesCount}</span>
-                </div>
-              </div>
-            </div>
+                <div className="space-y-6">
+                  {/* Theme display Mode */}
+                  <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-5 space-y-4 shadow-sm">
+                    <div className="flex items-center gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-900">
+                      <Sun size={18} className="dark:hidden" />
+                      <Moon size={18} className="hidden dark:block" />
+                      <h3 className="font-bold text-xs uppercase tracking-wide">Display Mode</h3>
+                    </div>
 
-            {/* Security notice */}
-            <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 text-xs text-zinc-500 space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-zinc-700 dark:text-zinc-300">
-                <Shield size={14} />
-                <span>Security Notice</span>
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => handleThemeChange('light')}
+                        className={`flex-1 py-3 px-4 rounded border text-xs font-bold uppercase tracking-wider cursor-pointer text-center transition-all ${
+                          theme === 'light'
+                            ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black font-extrabold shadow-sm'
+                            : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-850 dark:text-zinc-400'
+                        }`}
+                      >
+                        Light Mode
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleThemeChange('dark')}
+                        className={`flex-1 py-3 px-4 rounded border text-xs font-bold uppercase tracking-wider cursor-pointer text-center transition-all ${
+                          theme === 'dark'
+                            ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black font-extrabold shadow-sm'
+                            : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-850 dark:text-zinc-400'
+                        }`}
+                      >
+                        Dark Mode
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Docking Controls */}
+                  <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-5 space-y-4 shadow-sm">
+                    <div className="flex items-center gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-900">
+                      <Laptop size={18} className="text-zinc-455" />
+                      <h3 className="font-bold text-xs uppercase tracking-wide">Note & Past Paper Docking</h3>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 border border-zinc-100 dark:border-zinc-900 rounded-lg">
+                      <div className="space-y-1 pr-4">
+                        <span className="font-bold text-xs uppercase tracking-wider text-zinc-800 dark:text-zinc-200 block">Enable Window Docking Overlay</span>
+                        <p className="text-[10px] text-zinc-450 dark:text-zinc-500 leading-normal max-w-lg">
+                          When active, closing floating individual notes or past papers will place them into the dock bar at the bottom-right corner. Disabling this hides the dock and fully closes windows upon clicking exit.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setDockingEnabled(!dockingEnabled)}
+                        className="text-zinc-650 dark:text-zinc-350 cursor-pointer"
+                        title={dockingEnabled ? "Disable Docking" : "Enable Docking"}
+                      >
+                        {dockingEnabled ? <ToggleRight size={38} className="text-zinc-900 dark:text-zinc-100" /> : <ToggleLeft size={38} className="text-zinc-400" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p>
-                Your session is secured using industry-standard JSON Web Tokens (JWT) encrypted and stored directly in secure cookies.
-              </p>
-            </div>
-          </div>
+            )}
+
+            {/* 3. MODELS SECTION (Redesigned matching user's reference mockup!) */}
+            {activeSection === 'models' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-black uppercase tracking-wide text-zinc-900 dark:text-zinc-100">Models</h2>
+                    <p className="text-xs text-zinc-400 mt-1">Configure AI models and view your quota.</p>
+                  </div>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-250 dark:border-zinc-850 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded text-[10px] font-black uppercase tracking-wider cursor-pointer">
+                    <RefreshCw size={11} />
+                    Refresh
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Model Credits Section */}
+                  <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-5 space-y-4 shadow-sm">
+                    <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Model Credits</div>
+                    <div className="flex items-center justify-between p-3 border border-zinc-100 dark:border-zinc-900 rounded-lg">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-xs uppercase tracking-wide block">Enable AI Credit Overages</span>
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 leading-normal max-w-md">
+                          When toggled on, Precision Edu will use your AI credits to fulfill model requests once you're out of model quota.
+                        </p>
+                      </div>
+                      <button className="text-zinc-400 cursor-pointer">
+                        <ToggleLeft size={32} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Model Quota Section */}
+                  <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-5 space-y-4 shadow-sm">
+                    <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Model Quota</div>
+                    
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-900 space-y-3.5">
+                      {[
+                        { name: "Gemini 3.5 Flash (Medium)", limit: "Refreshes in 3 hours, 15 minutes", progress: 45 },
+                        { name: "Gemini 3.5 Flash (High)", limit: "Refreshes in 3 hours, 15 minutes", progress: 20 },
+                        { name: "Gemini 3.5 Flash (Low)", limit: "Refreshes in 3 hours, 15 minutes", progress: 85 },
+                        { name: "Gemini 3.1 Pro (Low)", limit: "Refreshes in 3 hours, 15 minutes", progress: 60 },
+                        { name: "Claude Sonnet 4.6 (Thinking)", limit: "Refreshes in 4 days, 11 hours", progress: 10 },
+                        { name: "Claude Opus 4.6 (Thinking)", limit: "Refreshes in 4 days, 11 hours", progress: 5 }
+                      ].map((model, index) => (
+                        <div key={index} className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-semibold">
+                          <div className="space-y-1">
+                            <span className="font-bold uppercase text-[10px] text-zinc-800 dark:text-zinc-200 block">{model.name}</span>
+                            <div className="w-36 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full" style={{ width: `${model.progress}%` }} />
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-black uppercase text-zinc-450 dark:text-zinc-500">{model.limit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4. OTHER SECTIONS (Mock settings) */}
+            {activeSection !== 'account' && activeSection !== 'appearance' && activeSection !== 'models' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                <div>
+                  <h2 className="text-xl font-black uppercase tracking-wide text-zinc-900 dark:text-zinc-100">
+                    {menuSections.flatMap(s => s.items).find(i => i.id === activeSection)?.label || "Settings"}
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-1">Configure preference layouts and customized behaviors.</p>
+                </div>
+
+                <div className="bg-white dark:bg-[#181a20] border border-zinc-200 dark:border-zinc-900 rounded-xl p-8 text-center space-y-3 shadow-sm">
+                  <Database size={32} className="mx-auto text-zinc-400 opacity-60" />
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-zinc-800 dark:text-zinc-200">Settings Section</h3>
+                  <p className="text-[10px] text-zinc-500 max-w-xs mx-auto leading-normal uppercase tracking-wide font-semibold">
+                    Configuration settings for {activeSection} are loaded automatically from your workspace environment context.
+                  </p>
+                </div>
+              </div>
+            )}
+          </main>
         </div>
       </div>
     </div>
