@@ -137,9 +137,9 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
           });
 
           if (signInError) {
-            setMessage('Account created! Please check your email to confirm and log in.');
+            setError(signInError.message);
           } else {
-            // Success: state listener will update user and close modal automatically
+            router.push('/dashboard');
             router.refresh();
           }
         }
@@ -184,11 +184,11 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
           }}
           className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/30 dark:bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-300"
         >
-          <div className="w-full max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl rounded-3xl p-8 relative z-10 transition-all duration-300 animate-in zoom-in-95 duration-250 text-center">
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md p-8 relative z-10 transition-all duration-300 text-center">
             
             <button 
               onClick={() => setActiveAuthPopup(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-850 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 transition-colors p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -199,58 +199,54 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
                 alt="Precision Logo"
                 className="h-8 w-auto dark:invert"
               />
-              <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">
                 Edu
               </span>
             </div>
 
-            <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center justify-center gap-2">
-              <Lock size={16} className="text-zinc-400" />
-              Portal Access
-            </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-              {isSignUp 
-                ? 'Register your email to unlock all tools' 
-                : 'Sign in to access your dashboard, papers, and notes'
-              }
-            </p>
+            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
+              {isSignUp ? 'Create Account' : 'Welcome Back'}
+            </h1>
+          
 
             {error && (
-              <div className="mt-4 p-3 text-[11px] border border-red-200/60 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 text-red-650 dark:text-red-300 rounded-lg text-left">
-                {error}
+              <div className="mt-4 p-4 text-xs border border-red-200/60 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 rounded flex flex-col gap-1 text-left">
+                <span className="font-bold">Error</span>
+                <span>{error}</span>
               </div>
             )}
 
             {message && (
-              <div className="mt-4 p-3 text-[11px] border border-green-200/60 dark:border-green-900/50 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300 rounded-lg text-left">
-                {message}
+              <div className="mt-4 p-4 text-xs border border-green-200/60 dark:border-green-900/50 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300 rounded flex flex-col gap-1 text-left">
+                <span className="font-bold">Notice</span>
+                <span>{message}</span>
               </div>
             )}
 
             <form onSubmit={handleAuthSubmit} className="space-y-4 mt-6">
               <div className="text-left">
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-zinc-400">
-                  Email
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500 dark:text-zinc-400">
+                  Email Address
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-950/60 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 transition text-xs text-zinc-900 dark:text-white"
+                  className="w-full px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition text-sm text-zinc-850 dark:text-zinc-150"
                   placeholder="student@example.com"
                   required
                 />
               </div>
 
               <div className="text-left">
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-zinc-400">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500 dark:text-zinc-400">
                   Password
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-950/60 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 transition text-xs text-zinc-900 dark:text-white"
+                  className="w-full px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition text-sm text-zinc-850 dark:text-zinc-150"
                   placeholder="••••••••"
                   required
                 />
@@ -258,14 +254,14 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
 
               {isSignUp && (
                 <div className="text-left animate-in slide-in-from-top-2 duration-150">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-zinc-400">
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-zinc-500 dark:text-zinc-400">
                     Confirm Password
                   </label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-955/60 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 transition text-xs text-zinc-900 dark:text-white"
+                    className="w-full px-4 py-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition text-sm text-zinc-850 dark:text-zinc-150"
                     placeholder="••••••••"
                     required={isSignUp}
                   />
@@ -275,14 +271,13 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
               <button
                 type="submit"
                 disabled={formLoading}
-                className="w-full py-2.5 mt-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-100 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full h-10 py-10 mt-2 text-2xl font-bold uppercase tracking-wider transition-all duration-200 btn-notion-blue disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                {formLoading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In'}
-                {!formLoading && <ArrowRight size={12} />}
+                {formLoading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
               </button>
             </form>
 
-            <div className="mt-6 pt-5 border-t border-zinc-200/50 dark:border-zinc-800/50">
+            <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800 text-center">
               <button
                 type="button"
                 onClick={() => {
@@ -290,9 +285,9 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
                   setError(null);
                   setMessage(null);
                 }}
-                className="text-[10px] uppercase tracking-wider font-bold hover:underline text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 cursor-pointer"
+                className="text-xs uppercase tracking-wider font-bold hover:underline text-zinc-500 hover:text-zinc-850 dark:hover:text-zinc-200 cursor-pointer"
               >
-                {isSignUp ? 'Already have an account? Sign In' : "New to Precision? Register"}
+                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
               </button>
             </div>
 

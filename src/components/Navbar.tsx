@@ -27,6 +27,13 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const [isEmbedded, setIsEmbedded] = useState(false);
   const overlay = useOverlay();
 
+  const handleSignOut = async () => {
+    setIsUserMenuOpen(false);
+    await supabase.auth.signOut();
+    router.push('/auth');
+    router.refresh();
+  };
+
   const [isNotesMenuOpen, setIsNotesMenuOpen] = useState(false);
   const [recentNotes, setRecentNotes] = useState<any[]>([]);
   const notesMenuRef = useRef<HTMLDivElement>(null);
@@ -315,6 +322,13 @@ export default function Navbar({ userEmail }: NavbarProps) {
                           <Settings size={14} />
                           Edit Settings
                         </Link>
+                        <button
+                          onClick={handleSignOut}
+                          className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors border-t border-zinc-100 dark:border-zinc-800 cursor-pointer"
+                        >
+                          <LogOut size={14} />
+                          Log out
+                        </button>
                       </div>
                     </>
                   )}
@@ -324,7 +338,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
               pathname !== '/auth' && (
                 <Link
                   href="/auth"
-                  className="px-4 py-2 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded text-xs font-bold tracking-wider transition-all duration-200 btn-notion-black"
+                  className="px-4 py-2 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded text-lg font-bold tracking-wider transition-all duration-200 btn-notion-black"
                 >
                   SIGN IN
                 </Link>

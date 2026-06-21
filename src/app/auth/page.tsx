@@ -54,7 +54,7 @@ export default function AuthPage() {
           });
 
           if (signInError) {
-            setMessage('Account created! Please check your email to confirm and log in.');
+            setError(signInError.message);
           } else {
             router.push('/dashboard');
             router.refresh();
@@ -167,7 +167,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 mt-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 btn-notion-blue disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-4 mt-2 text-lg font-bold uppercase tracking-wider transition-all duration-200 btn-notion-blue disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
           </button>
