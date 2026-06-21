@@ -163,7 +163,7 @@ export default function PastPapersPage() {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [isKeywordSearchActive, setIsKeywordSearchActive] = useState<boolean>(false);
     const [filteredPapers, setFilteredPapers] = useState<Paper[]>([]);
-    const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(true);
     const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
     const applyFiltersAndSearch = useCallback((query: string) => {
@@ -420,31 +420,27 @@ export default function PastPapersPage() {
 
     return (
         <div className="h-[calc(100vh-4rem)] w-full flex overflow-hidden bg-zinc-50/50 dark:bg-zinc-950/20 transition-colors duration-300">
-            {/* Mobile Sidebar Toggle Button */}
+            {/* Sidebar Toggle Button */}
             <button 
-              onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden fixed bottom-6 right-6 p-4 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded border border-zinc-200 dark:border-zinc-800 z-30 flex items-center justify-center cursor-pointer"
+              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              className="fixed bottom-6 left-6 p-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-955 rounded-full shadow-lg z-50 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+              title="Open Filters"
             >
-              <Menu size={20} />
+              {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
 
-            {/* Backdrop for Mobile */}
-            {mobileSidebarOpen && (
-                <div 
-                  className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-30 transition-opacity"
-                  onClick={() => setMobileSidebarOpen(false)}
-                />
-            )}
 
-            {/* Left Sidebar Filter Section */}
+            {/* Left Sidebar Filter Section (Overlay style at bottom left) */}
             <aside 
-              className={`fixed lg:relative top-0 bottom-0 left-0 w-80 max-w-[85vw] bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 p-6 z-40 lg:z-10 transition-transform duration-300 lg:translate-x-0 overflow-hidden flex flex-col gap-6 ${
-                mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+              className={`fixed bottom-24 left-6 w-80 max-w-[calc(100vw-3rem)] max-h-[70vh] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 z-40 shadow-2xl transition-all duration-200 flex flex-col gap-4 overflow-y-auto no-scrollbar ${
+                mobileSidebarOpen 
+                  ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' 
+                  : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
               }`}
             >
                 <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Past Papers</h2>
-                    <button className="lg:hidden p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-full cursor-pointer" onClick={() => setMobileSidebarOpen(false)}>
+                    <h2 className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Select</h2>
+                    <button className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full cursor-pointer" onClick={() => setMobileSidebarOpen(false)}>
                         <X size={16} />
                     </button>
                 </div>
@@ -467,7 +463,7 @@ export default function PastPapersPage() {
                         )}
                     </div>
 
-                    <div>
+                    <div className={`transition-all duration-200 ${isKeywordSearchActive ? 'blur-[1.5px] opacity-40 pointer-events-none select-none' : ''}`}>
                         <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">EXAM LEVEL</label>
                         <select
                             className="w-full p-2 text-xs bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
@@ -481,7 +477,7 @@ export default function PastPapersPage() {
                     </div>
 
                     {Object.keys(subjectsForCurrentSelection).length > 0 && (
-                        <div>
+                        <div className={`transition-all duration-200 ${isKeywordSearchActive ? 'blur-[1.5px] opacity-40 pointer-events-none select-none' : ''}`}>
                             <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">SUBJECT</label>
                             <select
                                 className="w-full p-2 text-xs bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
@@ -499,8 +495,8 @@ export default function PastPapersPage() {
 
                 {/* Unit/Paper Selector */}
                 {unitsForCurrentSubject.length > 0 && (
-                    <div className="flex flex-col gap-2 bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl">
-                        <label className="block text-[10px] font-bold text-zinc-450 dark:text-zinc-400 uppercase tracking-widest mb-1">Select Unit</label>
+                    <div className={`flex flex-col gap-2 bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl transition-all duration-200 ${isKeywordSearchActive ? 'blur-[1.5px] opacity-40 pointer-events-none select-none' : ''}`}>
+                        <label className="block text-[10px] font-bold text-zinc-455 dark:text-zinc-400 uppercase tracking-widest mb-1">Select Unit</label>
                         <div className="flex flex-wrap gap-2">
                             {unitsForCurrentSubject.map(u => (
                                 <button
@@ -509,7 +505,7 @@ export default function PastPapersPage() {
                                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer grow text-center ${
                                       unit === u 
                                           ? 'bg-blue-600 text-white' 
-                                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-350 hover:bg-zinc-200 dark:hover:bg-zinc-750'
+                                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-350 hover:bg-zinc-200 dark:hover:bg-zinc-755'
                                   }`}
                                   disabled={isKeywordSearchActive}
                                 >
@@ -525,18 +521,17 @@ export default function PastPapersPage() {
             <main className="flex-1 overflow-y-auto py-4 sm:py-6 lg:py-8 w-full">
                 <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex flex-col gap-6">
                     {/* Engine Header Info Block */}
-                    <div className="flex flex-col gap-4">
-                        <div className="flex justify-between items-end">
-                            <div>
-                                <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-                                    {examBoard} • {examLevel} {subject && `• ${subject}`} {unit && `• ${unit}`}
-                                </h1>
-                            </div>
-                            <div className="hidden lg:flex items-center gap-2">
-                                <span className="px-3 py-1 text-xs font-bold rounded border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-900">
-                                    {filteredPapers.length} Papers Available
-                                </span>
-                            </div>
+                    <div className="flex flex-col gap-6 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                            <h1 className="text-6xl mt-4 mb-4 font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+                                Past Papers
+                            </h1>
+                            <p className="text-lg font-semibold text-zinc-405 dark:text-zinc-500 mt-1 uppercase tracking-wide">
+                                {examBoard} {examLevel} {subject && `• ${subject}`} {unit && `• ${unit}`}
+                            </p>
+                            <span className="mt-4 px-3 py-1 text-xs font-bold rounded border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
+                                {filteredPapers.length} Papers Available
+                            </span>
                         </div>
                     </div>
 

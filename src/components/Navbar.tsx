@@ -20,6 +20,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLearnMenuOpen, setIsLearnMenuOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const learnMenuRef = useRef<HTMLDivElement>(null);
 
   // Fetch username dynamically
@@ -34,6 +35,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
         const { profile } = await ensureUserProfile(supabase, user.id, user.email || null);
         if (profile) {
           setUsername(profile.username);
+          setAvatarUrl(profile.avatar_url || null);
         }
       }
     }
@@ -77,21 +79,34 @@ export default function Navbar({ userEmail }: NavbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/auth');
-    router.refresh();
+  const renderAvatar = (urlOrGradient: string | null, sizeClass = "h-6 w-6") => {
+    if (!urlOrGradient) {
+      return (
+        <div className={`${sizeClass} rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-650 dark:text-zinc-400 border border-black shrink-0`}>
+          {username ? username.charAt(0).toUpperCase() : 'U'}
+        </div>
+      );
+    }
+    const isGradient = urlOrGradient.startsWith('linear-gradient');
+    if (isGradient) {
+      return (
+        <div 
+          className={`${sizeClass} rounded-full border border-black  shrink-0`}
+          style={{ background: urlOrGradient }}
+        />
+      );
+    }
+    return (
+      <img 
+        src={urlOrGradient} 
+        alt="Avatar"
+        className={`${sizeClass} rounded-full object-cover border border-zinc-200 dark:border-zinc-850 shadow-sm shrink-0`}
+        onError={(e) => {
+          e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150';
+        }}
+      />
+    );
   };
 
   if (pathname && pathname.startsWith('/past-papers/viewer')) {
@@ -201,6 +216,10 @@ export default function Navbar({ userEmail }: NavbarProps) {
                   <MessageCircle size={14} />
                   Chat
                 </Link>
+                <Link href="/notes" className={navLinkClass('/notes')}>
+                  <FileText size={14} />
+                  Notes
+                </Link>
                 {/* Tutors (Hidden for now)
                 <Link href="/tutors" className={navLinkClass('/tutors')}>
                   <GraduationCap size={14} />
@@ -231,6 +250,9 @@ export default function Navbar({ userEmail }: NavbarProps) {
                   <Link href="/chat" className={mobileLinkClass('/chat')}>
                     <MessageCircle size={16} />
                   </Link>
+                  <Link href="/notes" className={mobileLinkClass('/notes')}>
+                    <FileText size={16} />
+                  </Link>
                   {/* Tutors Mobile (Hidden for now)
                   <Link href="/tutors" className={mobileLinkClass('/tutors')}>
                     <GraduationCap size={16} />
@@ -245,12 +267,13 @@ export default function Navbar({ userEmail }: NavbarProps) {
                 </div>
  
                 {/* Account Dropdown */}
-                <div className="relative hidden sm:block">
+                <div className="relative hidden sm:block z-40">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-1.5 px-4 py-2 border border-zinc-200 dark:border-zinc-850 rounded text-xs font-bold transition-all duration-200 cursor-pointer uppercase tracking-wider text-zinc-850 dark:text-zinc-150 btn-notion-white"
+                    className="flex items-center gap-2 px-2 py-1.5 border border-zinc-200 dark:border-zinc-850 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer text-zinc-850 dark:text-zinc-150 hover:bg-zinc-50 dark:hover:bg-zinc-850 relative z-40"
                   >
-                    <span>Account</span>
+                    {renderAvatar(avatarUrl, "h-6 w-6")}
+                    <span>{username || 'Account'}</span>
                     <ChevronDown size={13} className={`transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
  
@@ -279,29 +302,10 @@ export default function Navbar({ userEmail }: NavbarProps) {
                           <Settings size={14} />
                           Edit Settings
                         </Link>
-                        <button
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            handleSignOut();
-                          }}
-                          className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
-                        >
-                          <LogOut size={14} />
-                          Sign Out
-                        </button>
                       </div>
                     </>
                   )}
                 </div>
- 
-                {/* Mobile Sign Out (Fallback) */}
-                <button
-                  onClick={handleSignOut}
-                  className="sm:hidden flex items-center justify-center p-2 hover:bg-zinc-150 dark:hover:bg-zinc-850 rounded text-red-600 cursor-pointer"
-                  title="Sign Out"
-                >
-                  <LogOut size={16} />
-                </button>
               </div>
             ) : (
               pathname !== '/auth' && (

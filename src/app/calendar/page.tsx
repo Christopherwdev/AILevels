@@ -186,7 +186,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-955 text-zinc-900 dark:text-zinc-100 flex flex-col p-0 md:p-6">
+    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-955 text-zinc-900 dark:text-zinc-100 flex flex-col p-0 md:p-0">
       <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col min-h-0 relative">
 
         {loading ? (

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { User, Shield, Key, Database, ArrowLeft, CheckCircle2, Globe, Sparkles, Sun, Moon } from 'lucide-react';
+import { User, Shield, Key, Database, ArrowLeft, CheckCircle2, Globe, Sparkles, Sun, Moon, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { ensureUserProfile, DEFAULT_AVATARS, UserProfile } from '@/utils/supabase/profile-helper';
 
@@ -32,6 +32,12 @@ export default function AccountPage() {
   // Database stats state
   const [stats, setStats] = useState({ scoresCount: 0, calendarNotesCount: 0 });
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth');
+    router.refresh();
+  };
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -219,15 +225,24 @@ export default function AccountPage() {
             <ArrowLeft size={16} />
             Back to Dashboard
           </Link>
-          {profile && (
-            <Link
-              href={`/user/${profile.username}`}
-              className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded text-xs font-bold transition-all"
+          <div className="flex items-center gap-2">
+            {profile && (
+              <Link
+                href={`/user/${profile.username}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded text-xs font-bold transition-all"
+              >
+                <Globe size={14} />
+                View Public Profile
+              </Link>
+            )}
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 dark:border-red-950/20 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded text-xs font-bold transition-all cursor-pointer"
             >
-              <Globe size={14} />
-              View Public Profile
-            </Link>
-          )}
+              <LogOut size={14} />
+              Sign Out
+            </button>
+          </div>
         </div>
 
         {/* Header */}
