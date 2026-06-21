@@ -1,11 +1,51 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/client';
 import { FileText, Calendar, MessageSquare, BookOpen, ArrowRight } from 'lucide-react';
 
-export default async function LandingPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export default function LandingPage() {
+  const supabase = createClient();
+  const [user, setUser] = useState<any>(null);
+  
+  // Typing animation states
+  const words = ["A levels", "IGCSE"];
+  const [wordIndex, setWordIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    }
+    checkUser();
+  }, [supabase]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    const currentWord = words[wordIndex];
+
+    if (isDeleting) {
+      timer = setTimeout(() => {
+        setDisplayedText(prev => prev.slice(0, -1));
+      }, 70);
+    } else {
+      timer = setTimeout(() => {
+        setDisplayedText(prev => currentWord.slice(0, prev.length + 1));
+      }, 120);
+    }
+
+    if (!isDeleting && displayedText === currentWord) {
+      timer = setTimeout(() => setIsDeleting(true), 2000);
+    } else if (isDeleting && displayedText === "") {
+      setIsDeleting(false);
+      setWordIndex(prev => (prev + 1) % words.length);
+    }
+
+    return () => clearTimeout(timer);
+  }, [displayedText, isDeleting, wordIndex]);
 
   return (
     <div className="flex-grow w-full bg-white dark:bg-black text-zinc-900 dark:text-zinc-100 flex flex-col items-center justify-center font-sans selection:bg-zinc-900 dark:selection:bg-white selection:text-white dark:selection:text-black">
@@ -25,12 +65,16 @@ export default async function LandingPage() {
 
         {/* Large Apple-style Headline */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] max-w-3xl mb-6 text-zinc-900 dark:text-white">
-          Study at the speed of thought.
+          High quality exam tools for{' '}
+          <span className="inline-block min-w-[200px] text-left sm:min-w-[320px] md:min-w-[380px] text-blue-600 dark:text-blue-400">
+            {displayedText}
+            <span className="cursor-blink font-light text-zinc-450 dark:text-zinc-550 ml-1">|</span>
+          </span>
         </h1>
 
         {/* Simplistic Subtext */}
-        <p className="text-base sm:text-lg md:text-xl text-zinc-500 dark:text-zinc-400 max-w-2xl leading-relaxed mb-10">
-          A unified, high-performance workspace for past papers, scheduling, markdown notes, and study groups. Built for Pearson Edexcel IAL & IGCSE.
+        <p className="text-2xl  text-zinc-505 dark:text-zinc-400 max-w-2xl leading-relaxed mb-10">
+          Save and analyze your scores for past papers, browse all past papers conveniently, write study notes, and chat with study groups. Built for Pearson Edexcel IAL & IGCSE.
         </p>
 
         {/* Catchy CTAs */}
@@ -40,8 +84,8 @@ export default async function LandingPage() {
               href="/dashboard"
               className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-100 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all"
             >
-              Enter Dashboard
-              <ArrowRight size={13} />
+              Start Now
+              {/* <ArrowRight size={13} /> */}
             </Link>
           ) : (
             <Link
@@ -77,7 +121,7 @@ export default async function LandingPage() {
             <div className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
               <Calendar size={18} />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-550">Scheduler</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-555">Scheduler</span>
           </div>
           <h3 className="text-lg font-bold mb-2 text-zinc-900 dark:text-white">Revision Planner</h3>
           <p className="text-xs text-zinc-555 dark:text-zinc-400 leading-relaxed">
@@ -91,7 +135,7 @@ export default async function LandingPage() {
             <div className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
               <BookOpen size={18} />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-550">Markdown</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-555">Markdown</span>
           </div>
           <h3 className="text-lg font-bold mb-2 text-zinc-900 dark:text-white">Workspace Notes</h3>
           <p className="text-xs text-zinc-555 dark:text-zinc-400 leading-relaxed">
@@ -105,7 +149,7 @@ export default async function LandingPage() {
             <div className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
               <MessageSquare size={18} />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-550">Realtime</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-555">Realtime</span>
           </div>
           <h3 className="text-lg font-bold mb-2 text-zinc-900 dark:text-white">Syllabus Chat</h3>
           <p className="text-xs text-zinc-555 dark:text-zinc-400 leading-relaxed">

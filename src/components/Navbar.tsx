@@ -4,10 +4,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Settings, BookOpen, MessageCircle, GraduationCap, NotebookText } from 'lucide-react';
 import { ensureUserProfile } from '@/utils/supabase/profile-helper';
 import { subjects, getSubjectIcon } from '@/utils/subjects';
-import { useOverlay } from '@/context/OverlayContext';
+import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Settings, BookOpen, MessageCircle, GraduationCap, NotebookText, Menu, X } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 
 interface NavbarProps {
@@ -25,7 +24,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const learnMenuRef = useRef<HTMLDivElement>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
-  const overlay = useOverlay();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
     setIsUserMenuOpen(false);
@@ -139,7 +138,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
   }
 
   const navLinkClass = (path: string) =>
-    `flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors pt-1 pb-1 border-b-2 ${
+    `flex items-center gap-1.5 text-md font-semibold transition-colors pt-1 pb-1 border-b-2 ${
       pathname.startsWith(path)
         ? 'text-zinc-900 dark:text-zinc-100 border-zinc-900 dark:border-zinc-100'
         : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 border-transparent'
@@ -151,202 +150,367 @@ export default function Navbar({ userEmail }: NavbarProps) {
     }`;
 
   return (
-    <nav className="w-full bg-transparent dark:bg-black-200 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-40 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <>
+      <nav className="w-full bg-transparent dark:bg-black-200 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 sticky top-0 transition-colors duration-300 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Logo Section */}
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-1.5 group">
-              <img
-                src="/Precision Logo.svg"
-                alt="Precision Logo"
-                className="h-6 w-auto transition-all duration-300 group-hover:opacity-90"
-              />
-              <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-300">
-                Edu
-              </span>
-            </Link>
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-4 lg:gap-8">
+              {/* Hamburger Button for Mobile */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors"
+              >
+                <Menu size={20} />
+              </button>
 
-            {/* Navigation Links (Visible always, regardless of session) */}
-            <div className="hidden lg:flex items-center gap-6">
-              <Link href="/dashboard" className={navLinkClass('/dashboard')}>
-                <Layout size={14} />
-                Dashboard
-              </Link>
-              <Link href="/calendar" className={navLinkClass('/calendar')}>
-                <Calendar size={14} />
-                Calendar
+              <Link href="/" className="flex items-center gap-1.5 group">
+                <img
+                  src="/Precision Logo.svg"
+                  alt="Precision Logo"
+                  className="h-6 w-auto transition-all duration-300 group-hover:opacity-90"
+                />
+                <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-300">
+                  Edu
+                </span>
               </Link>
 
-              {/* Learn Dropdown */}
-              <div ref={learnMenuRef} className="relative">
-                <button
-                  onClick={() => setIsLearnMenuOpen(!isLearnMenuOpen)}
-                  className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer pt-1 pb-1 border-b-2 ${
-                    pathname.startsWith('/learn')
-                      ? 'text-zinc-900 dark:text-zinc-100 border-zinc-900 dark:border-zinc-100'
-                      : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 border-transparent'
-                  }`}
-                >
-                  <BookOpen size={14} />
-                  Learn
-                  <ChevronDown size={12} className={`transition-transform duration-200 ${isLearnMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {isLearnMenuOpen && (
-                  <>
-                    {/* Dropdown Backdrop */}
-                    <div className="fixed inset-0 z-[99] bg-transparent cursor-default animate-none" onClick={() => setIsLearnMenuOpen(false)} />
-                    <div className="absolute left-0 mt-3 w-56 bg-white border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-[100] shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IAL Subjects</div>
-                    {subjects.filter(s => s.level === 'IAL').map(s => {
-                      const ItemIcon = getSubjectIcon(s.iconName);
-                      return (
-                        <Link
-                          key={s.slug}
-                          href={`/learn/${s.slug}`}
-                          onClick={() => setIsLearnMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
-                            <ItemIcon size={10} className="text-white" />
-                          </div>
-                          {s.name}
-                        </Link>
-                      );
-                    })}
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IGCSE Subjects</div>
-                    {subjects.filter(s => s.level === 'IGCSE').map(s => {
-                      const ItemIcon = getSubjectIcon(s.iconName);
-                      return (
-                        <Link
-                          key={s.slug}
-                          href={`/learn/${s.slug}`}
-                          onClick={() => setIsLearnMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
-                            <ItemIcon size={10} className="text-white" />
-                          </div>
-                          {s.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                  </>
-                )}
-              </div>
-
-              <Link href="/past-papers" className={navLinkClass('/past-papers')}>
-                <FileText size={14} />
-                Past Papers
-              </Link>
-              <Link href="/chat" className={navLinkClass('/chat')}>
-                <MessageCircle size={14} />
-                Chat
-              </Link>
-              
-              <Link href="/notes" className={navLinkClass('/notes')}>
-                <FileText size={14} />
-                Notes
-              </Link>
-            </div>
-          </div>
-
-          {/* Right Side Panel */}
-          <div className="flex items-center gap-4">
-            {/* Mobile Navigation Dropdown/Buttons */}
-            <div className="lg:hidden flex gap-1">
-              <Link href="/dashboard" className={mobileLinkClass('/dashboard')}>
-                <Layout size={16} />
-              </Link>
-              <Link href="/calendar" className={mobileLinkClass('/calendar')}>
-                <Calendar size={16} />
-              </Link>
-              <Link href="/past-papers" className={mobileLinkClass('/past-papers')}>
-                <FileText size={16} />
-              </Link>
-              <Link href="/chat" className={mobileLinkClass('/chat')}>
-                <MessageCircle size={16} />
-              </Link>
-              <Link href="/notes" className={mobileLinkClass('/notes')}>
-                <FileText size={16} />
-              </Link>
-              {userEmail && (
-                <Link
-                  href={username ? `/user/${username}` : '/account'}
-                  className={mobileLinkClass('/user/')}
-                >
-                  <User size={16} />
+              {/* Navigation Links (Visible always, regardless of session) */}
+              <div className="hidden lg:flex items-center gap-6">
+                <Link href="/dashboard" className={navLinkClass('/dashboard')}>
+                  <Layout size={14} />
+                  Dashboard
                 </Link>
-              )}
-            </div>
+                <Link href="/calendar" className={navLinkClass('/calendar')}>
+                  <Calendar size={14} />
+                  Calendar
+                </Link>
 
-            {/* User Session Interface */}
-            {userEmail ? (
-              <div className="flex items-center gap-3">
-                {/* Account Dropdown */}
-                <div className="relative hidden sm:block z-45">
+                {/* Learn Dropdown */}
+                <div ref={learnMenuRef} className="relative">
                   <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 px-2 py-1.5 border border-zinc-200 dark:border-zinc-850 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer text-zinc-850 dark:text-zinc-150 hover:bg-zinc-50 dark:hover:bg-zinc-850 relative z-40"
+                    onClick={() => setIsLearnMenuOpen(!isLearnMenuOpen)}
+                    className={`flex items-center gap-1.5 text-md font-semibold  transition-colors cursor-pointer pt-1 pb-1 border-b-2 ${
+                      pathname.startsWith('/learn')
+                        ? 'text-zinc-900 dark:text-zinc-100 border-zinc-900 dark:border-zinc-100'
+                        : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 border-transparent'
+                    }`}
                   >
-                    {renderAvatar(avatarUrl, "h-6 w-6")}
-                    <span>{username || 'Account'}</span>
-                    <ChevronDown size={13} className={`transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    <BookOpen size={14} />
+                    Learn
+                    <ChevronDown size={12} className={`transition-transform duration-200 ${isLearnMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
- 
-                  {isUserMenuOpen && (
+
+                  {isLearnMenuOpen && (
                     <>
                       {/* Dropdown Backdrop */}
-                      <div className="fixed inset-0 z-30" onClick={() => setIsUserMenuOpen(false)} />
-                      
-                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded py-1 z-40">
-                        <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800 text-[10px] text-zinc-400 font-bold uppercase tracking-wider truncate">
-                          {userEmail}
-                        </div>
-                        <Link
-                          href={username ? `/user/${username}` : '/account'}
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <User size={14} />
-                          My Profile
-                        </Link>
-                        <Link
-                          href="/account"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors border-t border-zinc-100 dark:border-zinc-800"
-                        >
-                          <Settings size={14} />
-                          Edit Settings
-                        </Link>
-                        <button
-                          onClick={handleSignOut}
-                          className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors border-t border-zinc-100 dark:border-zinc-800 cursor-pointer"
-                        >
-                          <LogOut size={14} />
-                          Log out
-                        </button>
+                      <div className="fixed inset-0 z-[99] bg-transparent cursor-default animate-none" onClick={() => setIsLearnMenuOpen(false)} />
+                      <div className="absolute left-0 mt-3 w-56 bg-white border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-[100] shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
+                        <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IAL Subjects</div>
+                        {subjects.filter(s => s.level === 'IAL').map(s => {
+                          const ItemIcon = getSubjectIcon(s.iconName);
+                          return (
+                            <Link
+                              key={s.slug}
+                              href={`/learn/${s.slug}`}
+                              onClick={() => setIsLearnMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
+                                <ItemIcon size={10} className="text-white" />
+                              </div>
+                              {s.name}
+                            </Link>
+                          );
+                        })}
+                        <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                        <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IGCSE Subjects</div>
+                        {subjects.filter(s => s.level === 'IGCSE').map(s => {
+                          const ItemIcon = getSubjectIcon(s.iconName);
+                          return (
+                            <Link
+                              key={s.slug}
+                              href={`/learn/${s.slug}`}
+                              onClick={() => setIsLearnMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
+                                <ItemIcon size={10} className="text-white" />
+                              </div>
+                              {s.name}
+                            </Link>
+                          );
+                        })}
                       </div>
                     </>
                   )}
                 </div>
-              </div>
-            ) : (
-              pathname !== '/auth' && (
-                <Link
-                  href="/auth"
-                  className="px-4 py-2 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded text-lg font-bold tracking-wider transition-all duration-200 btn-notion-black"
-                >
-                  SIGN IN
+
+                <Link href="/past-papers" className={navLinkClass('/past-papers')}>
+                  <FileText size={14} />
+                  Past Papers
                 </Link>
-              )
-            )}
+                <Link href="/chat" className={navLinkClass('/chat')}>
+                  <MessageCircle size={14} />
+                  Chat
+                </Link>
+                
+                <Link href="/notes" className={navLinkClass('/notes')}>
+                  <FileText size={14} />
+                  Notes
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Side Panel */}
+            <div className="flex items-center gap-4">
+              {/* User Session Interface */}
+              {userEmail ? (
+                <div className="flex items-center gap-3">
+                  {/* Account Dropdown */}
+                  <div className="relative z-45">
+                    <button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className="flex items-center gap-2 px-2 py-1.5 border border-zinc-200 dark:border-zinc-850 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer text-zinc-850 dark:text-zinc-150 hover:bg-zinc-50 dark:hover:bg-zinc-855 relative z-45"
+                    >
+                      {renderAvatar(avatarUrl, "h-6 w-6")}
+                      <span>{username || 'Account'}</span>
+                      <ChevronDown size={13} className={`transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    </button>
+   
+                    {isUserMenuOpen && (
+                      <>
+                        {/* Dropdown Backdrop */}
+                        <div className="fixed inset-0 z-30" onClick={() => setIsUserMenuOpen(false)} />
+                        
+                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded py-1 z-40">
+                          <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800 text-[10px] text-zinc-400 font-bold uppercase tracking-wider truncate">
+                            {userEmail}
+                          </div>
+                          <Link
+                            href={username ? `/user/${username}` : '/account'}
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <User size={14} />
+                            My Profile
+                          </Link>
+                          <Link
+                            href="/account"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors border-t border-zinc-100 dark:border-zinc-800"
+                          >
+                            <Settings size={14} />
+                            Edit Settings
+                          </Link>
+                          <button
+                            onClick={handleSignOut}
+                            className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors border-t border-zinc-100 dark:border-zinc-800 cursor-pointer"
+                          >
+                            <LogOut size={14} />
+                            Log out
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                pathname !== '/auth' && (
+                  <Link
+                    href="/auth"
+                    className="px-4 py-2 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded text-lg font-bold tracking-wider transition-all duration-200 btn-notion-black"
+                  >
+                    SIGN IN
+                  </Link>
+                )
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile Left Sidebar */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-[99999] lg:hidden"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-300 z-10"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+
+          {/* Sidebar Panel */}
+          <div className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 flex flex-col justify-between z-20 animate-in slide-in-from-left duration-300">
+            <div className="space-y-6">
+              {/* Header: Logo & Close */}
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
+                <Link 
+                  href="/" 
+                  onClick={() => setIsSidebarOpen(false)} 
+                  className="flex items-center gap-1.5"
+                >
+                  <img
+                    src="/Precision Logo.svg"
+                    alt="Precision Logo"
+                    className="h-5 w-auto dark:invert"
+                  />
+                  <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-955 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
+                    Edu
+                  </span>
+                </Link>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-1 text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-250 rounded-md transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="flex flex-col gap-1">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname === '/dashboard'
+                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-55'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-850 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  <Layout size={16} />
+                  Dashboard
+                </Link>
+                <Link
+                  href="/calendar"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname === '/calendar'
+                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-55'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-850 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  <Calendar size={16} />
+                  Calendar
+                </Link>
+                <Link
+                  href="/past-papers"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname.startsWith('/past-papers')
+                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-55'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-850 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  <FileText size={16} />
+                  Past Papers
+                </Link>
+                <Link
+                  href="/chat"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname === '/chat'
+                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-955 dark:text-zinc-55'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-850 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  <MessageCircle size={16} />
+                  Chat
+                </Link>
+                <Link
+                  href="/notes"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname === '/notes'
+                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-955 dark:text-zinc-55'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-855 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  <FileText size={16} />
+                  Notes
+                </Link>
+
+                {/* Learn section in sidebar */}
+                <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Learn Subjects</div>
+                  <div className="max-h-40 overflow-y-auto pr-1 flex flex-col gap-0.5">
+                    {subjects.map(s => {
+                      const ItemIcon = getSubjectIcon(s.iconName);
+                      return (
+                        <Link
+                          key={s.slug}
+                          href={`/learn/${s.slug}`}
+                          onClick={() => setIsSidebarOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-650 dark:text-zinc-450 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                        >
+                          <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: s.color }}>
+                            <ItemIcon size={8} className="text-white" />
+                          </div>
+                          <span className="truncate">{s.name} ({s.level})</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </nav>
+            </div>
+
+            {/* Bottom session area */}
+            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+              {userEmail ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 px-3">
+                    {renderAvatar(avatarUrl, "h-8 w-8")}
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">{username || 'Account'}</p>
+                      <p className="text-[10px] text-zinc-450 truncate">{userEmail}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Link
+                      href={username ? `/user/${username}` : '/account'}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-750 dark:text-zinc-350 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      <User size={14} />
+                      My Profile
+                    </Link>
+                    <Link
+                      href="/account"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-750 dark:text-zinc-350 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      <Settings size={14} />
+                      Edit Settings
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsSidebarOpen(false);
+                        handleSignOut();
+                      }}
+                      className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-955/20 transition-colors cursor-pointer border-none bg-transparent"
+                    >
+                      <LogOut size={14} />
+                      Log out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  href="/auth"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="w-full py-2.5 flex items-center justify-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:opacity-90"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

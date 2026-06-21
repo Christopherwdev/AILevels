@@ -577,7 +577,7 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-white dark:bg-zinc-950">
+      <div className="h-[calc(100dvh-4rem)] flex items-center justify-center bg-white dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-2">
           <div className="w-8 h-8 rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-800 dark:border-t-zinc-100 animate-spin" />
           <p className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">Loading chat...</p>
@@ -618,7 +618,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex bg-white dark:bg-black overflow-hidden font-sans">
+    <div className="h-[calc(100dvh-4rem)] flex bg-white dark:bg-black overflow-hidden font-sans">
       {/* Sidebar — Room List */}
       <aside className={`${showSidebar ? 'w-full md:w-80' : 'w-0 overflow-hidden'} flex-shrink-0 border-r border-zinc-100 dark:border-zinc-900 flex flex-col transition-all duration-300 bg-white dark:bg-black`}>
         <div className="p-5 border-b border-zinc-50 dark:border-zinc-950 flex flex-col gap-4 select-none">

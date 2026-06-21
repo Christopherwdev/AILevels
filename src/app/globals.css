@@ -178,4 +178,13 @@ html, body, .overflow-y-auto, .overflow-auto, [class*="overflow-"] {
   transition: filter 0.4s ease;
 }
 
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: cursor-blink 0.8s infinite;
+}
+
 

@@ -485,16 +485,7 @@ export default function UserProfilePage({ params }: ProfilePageProps) {
     <div className="flex-1 w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-0 flex flex-col items-center p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl w-full space-y-8">
         
-        {/* Navigation back */}
-        <div className="flex items-center">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 text-sm text-zinc-500 hover:text-black dark:hover:text-white transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Link>
-        </div>
+       
 
         {/* ── PROFILE HEADER (INSTAGRAM STYLE) ── */}
         <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center sm:items-start pb-8 border-b border-zinc-200 dark:border-zinc-800">

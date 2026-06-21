@@ -21,25 +21,70 @@ export default function NoteEditor({ noteId, onDelete, toolbarPrefix, toolbarSuf
   const editorRef = useRef<HTMLDivElement>(null);
   const toolbarScrollRef = useRef<HTMLDivElement>(null);
 
-  // Native capture-phase touch scroll for the toolbar
-  // (React synthetic events don't reliably fire when touch starts on overflow:hidden children)
+  // Native capture-phase touch and mouse drag scroll for the toolbar
   useEffect(() => {
     const el = toolbarScrollRef.current;
     if (!el) return;
+    let isDown = false;
     let startX = 0;
     let startScrollLeft = 0;
-    const onStart = (e: TouchEvent) => {
-      startX = e.touches[0].clientX;
+
+    const onStart = (clientX: number) => {
+      isDown = true;
+      startX = clientX;
       startScrollLeft = el.scrollLeft;
     };
-    const onMove = (e: TouchEvent) => {
-      el.scrollLeft = startScrollLeft + (startX - e.touches[0].clientX);
+
+    const onMove = (clientX: number, e: Event) => {
+      if (!isDown) return;
+      const walk = startX - clientX;
+      if (Math.abs(walk) > 2) {
+        el.scrollLeft = startScrollLeft + walk;
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      }
     };
-    el.addEventListener('touchstart', onStart, { passive: true, capture: true });
-    el.addEventListener('touchmove', onMove, { passive: true, capture: true });
+
+    const onEnd = () => {
+      isDown = false;
+    };
+
+    // Touch events
+    const handleTouchStart = (e: TouchEvent) => {
+      onStart(e.touches[0].clientX);
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      onMove(e.touches[0].clientX, e);
+    };
+
+    // Mouse events
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return; // Left click only
+      onStart(e.clientX);
+    };
+    const handleMouseMove = (e: MouseEvent) => {
+      onMove(e.clientX, e);
+    };
+
+    el.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+    el.addEventListener('touchend', onEnd, { capture: true });
+    el.addEventListener('touchcancel', onEnd, { capture: true });
+
+    el.addEventListener('mousedown', handleMouseDown, { capture: true });
+    window.addEventListener('mousemove', handleMouseMove, { capture: true });
+    window.addEventListener('mouseup', onEnd, { capture: true });
+
     return () => {
-      el.removeEventListener('touchstart', onStart, { capture: true } as EventListenerOptions);
-      el.removeEventListener('touchmove', onMove, { capture: true } as EventListenerOptions);
+      el.removeEventListener('touchstart', handleTouchStart, { capture: true } as EventListenerOptions);
+      el.removeEventListener('touchmove', handleTouchMove, { capture: true } as EventListenerOptions);
+      el.removeEventListener('touchend', onEnd, { capture: true } as EventListenerOptions);
+      el.removeEventListener('touchcancel', onEnd, { capture: true } as EventListenerOptions);
+
+      el.removeEventListener('mousedown', handleMouseDown, { capture: true } as EventListenerOptions);
+      window.removeEventListener('mousemove', handleMouseMove, { capture: true } as EventListenerOptions);
+      window.removeEventListener('mouseup', onEnd, { capture: true } as EventListenerOptions);
     };
   }, []);
 
@@ -352,55 +397,55 @@ export default function NoteEditor({ noteId, onDelete, toolbarPrefix, toolbarSuf
             </button>
           </div>
 
-          {/* Options Dropdown Menu */}
-          <div className="shrink-0 relative">
-            <button
-              onClick={() => setOptionsMenuOpen(!optionsMenuOpen)}
-              className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-555 cursor-pointer"
-              title="More Options"
-            >
-              <MoreVertical size={16} />
-            </button>
-
-            {optionsMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setOptionsMenuOpen(false)} />
-                <div className="absolute left-0 mt-1.5 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <button
-                    onClick={handleCopyNoteContent}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-350 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
-                  >
-                    <Copy size={13} />
-                    Copy Content
-                  </button>
-                  <button
-                    onClick={handleDuplicateNote}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-355 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
-                  >
-                    <Plus size={13} />
-                    Duplicate Note
-                  </button>
-                  <button
-                    onClick={handleClearNoteContent}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
-                  >
-                    <FileText size={13} />
-                    Clear Content
-                  </button>
-                  <div className="h-px bg-zinc-150 dark:bg-zinc-800 my-1" />
-                  <button
-                    onClick={handleDeleteNote}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-655 hover:bg-red-50 dark:hover:bg-red-955/20 text-left transition-colors cursor-pointer"
-                  >
-                    <Trash2 size={13} />
-                    Delete Note
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
         </div>{/* end scrollable region */}
+
+        {/* Options Dropdown Menu (moved outside scrollable region to prevent clipping) */}
+        <div className="shrink-0 relative mr-2">
+          <button
+            onClick={() => setOptionsMenuOpen(!optionsMenuOpen)}
+            className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-555 cursor-pointer"
+            title="More Options"
+          >
+            <MoreVertical size={16} />
+          </button>
+
+          {optionsMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setOptionsMenuOpen(false)} />
+              <div className="absolute right-0 mt-1.5 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <button
+                  onClick={handleCopyNoteContent}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-350 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
+                >
+                  <Copy size={13} />
+                  Copy Content
+                </button>
+                <button
+                  onClick={handleDuplicateNote}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-355 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
+                >
+                  <Plus size={13} />
+                  Duplicate Note
+                </button>
+                <button
+                  onClick={handleClearNoteContent}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
+                >
+                  <FileText size={13} />
+                  Clear Content
+                </button>
+                <div className="h-px bg-zinc-150 dark:bg-zinc-800 my-1" />
+                <button
+                  onClick={handleDeleteNote}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-655 hover:bg-red-50 dark:hover:bg-red-955/20 text-left transition-colors cursor-pointer"
+                >
+                  <Trash2 size={13} />
+                  Delete Note
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* ── Fixed suffix: always visible on the right ── */}
         {toolbarSuffix && (
