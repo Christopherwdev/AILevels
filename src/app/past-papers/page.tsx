@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, X, ChevronRight, Menu } from 'lucide-react';
 import { disabledPapersList } from '@/utils/disabled-papers';
+import { subjects } from '@/utils/subjects';
 
 interface Paper {
     examBoard: string;
@@ -581,12 +582,12 @@ const PaperCard: React.FC<PaperCardProps> = ({ paper, onAction }) => {
 
     const getSubjectColor = (subj: string) => {
         const s = subj.toLowerCase();
-        if (s.includes('chinese')) return '#FC3D39'; // iOS Red
-        if (s.includes('physics')) return '#8944AB'; // Purple
-        if (s.includes('chemistry')) return '#FD9426'; // iOS Orange
-        if (s.includes('biology')) return '#53D769'; // iOS Green
-        if (s.includes('english')) return '#FC3158'; // Pink/Purple
-        return '#71717a'; // Muted Gray
+        let matched = subjects.find(sub => s.includes(sub.slug) || sub.slug.includes(s));
+        if (!matched) {
+            if (s.includes('math')) matched = subjects.find(sub => sub.slug === 'mathematics');
+            if (s.includes('english')) matched = subjects.find(sub => sub.slug.includes('english'));
+        }
+        return matched ? matched.color : '#71717a';
     };
 
     const subjColor = getSubjectColor(paper.subject);

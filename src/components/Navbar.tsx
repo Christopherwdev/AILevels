@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { LogOut, Sun, Moon, FileText, Layout, User, ChevronDown, Calendar, Settings, BookOpen, MessageCircle, GraduationCap } from 'lucide-react';
 import { ensureUserProfile } from '@/utils/supabase/profile-helper';
-import { subjects } from '@/utils/subjects';
+import { subjects, getSubjectIcon } from '@/utils/subjects';
 
 interface NavbarProps {
   userEmail: string | null;
@@ -54,6 +54,18 @@ export default function Navbar({ userEmail }: NavbarProps) {
     }
   }, []);
 
+  // Listen to theme changes from Settings page
+  useEffect(() => {
+    const syncTheme = () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        setTheme(savedTheme);
+      }
+    };
+    window.addEventListener('theme-change', syncTheme);
+    return () => window.removeEventListener('theme-change', syncTheme);
+  }, []);
+
   // Close learn menu on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -94,8 +106,8 @@ export default function Navbar({ userEmail }: NavbarProps) {
     }`;
 
   const mobileLinkClass = (path: string) =>
-    `p-2 border border-zinc-200 dark:border-zinc-850 rounded ${
-      pathname.startsWith(path) ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-955' : 'bg-transparent text-zinc-500'
+    `p-2 rounded ${
+      pathname.startsWith(path) ? 'bg-zinc-150 text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50' : 'bg-transparent text-zinc-500'
     }`;
 
   return (
@@ -104,9 +116,12 @@ export default function Navbar({ userEmail }: NavbarProps) {
         <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center gap-1.5 group">
               <span className="text-lg sm:text-xl font-black tracking-tight bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 bg-clip-text text-transparent transition-all duration-300 group-hover:opacity-90">
-                Precision Edu
+                Precision
+              </span>
+              <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-300">
+                Edu
               </span>
             </Link>
 
@@ -122,7 +137,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                   Calendar
                 </Link>
 
-                {/* Learn Dropdown (Hidden for now)
+                {/* Learn Dropdown */}
                 <div ref={learnMenuRef} className="relative">
                   <button
                     onClick={() => setIsLearnMenuOpen(!isLearnMenuOpen)}
@@ -140,34 +155,43 @@ export default function Navbar({ userEmail }: NavbarProps) {
                   {isLearnMenuOpen && (
                     <div className="absolute left-0 mt-3 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-50 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
                       <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IAL Subjects</div>
-                      {subjects.filter(s => s.level === 'IAL').map(s => (
-                        <Link
-                          key={s.slug}
-                          href={`/learn/${s.slug}`}
-                          onClick={() => setIsLearnMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <span className="text-sm">{s.icon}</span>
-                          {s.name}
-                        </Link>
-                      ))}
+                      {subjects.filter(s => s.level === 'IAL').map(s => {
+                        const ItemIcon = getSubjectIcon(s.iconName);
+                        return (
+                          <Link
+                            key={s.slug}
+                            href={`/learn/${s.slug}`}
+                            onClick={() => setIsLearnMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
+                              <ItemIcon size={10} className="text-white" />
+                            </div>
+                            {s.name}
+                          </Link>
+                        );
+                      })}
                       <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
                       <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IGCSE Subjects</div>
-                      {subjects.filter(s => s.level === 'IGCSE').map(s => (
-                        <Link
-                          key={s.slug}
-                          href={`/learn/${s.slug}`}
-                          onClick={() => setIsLearnMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <span className="text-sm">{s.icon}</span>
-                          {s.name}
-                        </Link>
-                      ))}
+                      {subjects.filter(s => s.level === 'IGCSE').map(s => {
+                        const ItemIcon = getSubjectIcon(s.iconName);
+                        return (
+                          <Link
+                            key={s.slug}
+                            href={`/learn/${s.slug}`}
+                            onClick={() => setIsLearnMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center border border-black flex-shrink-0" style={{ backgroundColor: s.color }}>
+                              <ItemIcon size={10} className="text-white" />
+                            </div>
+                            {s.name}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
-                */}
 
                 <Link href="/past-papers" className={navLinkClass('/past-papers')}>
                   <FileText size={14} />
@@ -189,14 +213,6 @@ export default function Navbar({ userEmail }: NavbarProps) {
 
           {/* Right Side Panel */}
           <div className="flex items-center gap-4">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 border border-zinc-200 dark:border-zinc-800 rounded hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
  
             {/* User Session Interface */}
             {userEmail ? (
@@ -281,7 +297,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                 {/* Mobile Sign Out (Fallback) */}
                 <button
                   onClick={handleSignOut}
-                  className="sm:hidden flex items-center justify-center p-2 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-150 rounded text-red-600 cursor-pointer"
+                  className="sm:hidden flex items-center justify-center p-2 hover:bg-zinc-150 dark:hover:bg-zinc-850 rounded text-red-600 cursor-pointer"
                   title="Sign Out"
                 >
                   <LogOut size={16} />

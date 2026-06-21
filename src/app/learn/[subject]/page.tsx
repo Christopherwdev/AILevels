@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getSubjectBySlug } from '@/utils/subjects';
+import { getSubjectBySlug, getSubjectIcon } from '@/utils/subjects';
 import { BookOpen, Play, FileText, ExternalLink, Clock, ChevronRight } from 'lucide-react';
 
 type Tab = 'notes' | 'videos' | 'past-papers';
@@ -117,12 +117,17 @@ export default function LearnSubjectPage() {
         <div className="absolute inset-0 opacity-[0.03]" style={{ background: `radial-gradient(circle at 30% 50%, ${subject.color}, transparent 60%)` }} />
         <div className="max-w-6xl mx-auto px-6 py-10">
           <div className="flex items-center gap-4">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg"
-              style={{ backgroundColor: subject.color + '18', border: `1px solid ${subject.color}30` }}
-            >
-              {subject.icon}
-            </div>
+            {(() => {
+              const SubjectIcon = getSubjectIcon(subject.iconName);
+              return (
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-black shadow-lg flex-shrink-0"
+                  style={{ backgroundColor: subject.color }}
+                >
+                  <SubjectIcon size={24} className="text-white" />
+                </div>
+              );
+            })()}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">
                 Edexcel {subject.level}

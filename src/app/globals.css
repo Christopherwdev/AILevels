@@ -147,3 +147,17 @@ html, body, .overflow-y-auto, .overflow-auto, [class*="overflow-"] {
   overscroll-behavior-y: none !important;
 }
 
+@keyframes saturn-hue-shift {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+.animate-saturn-glow {
+  animation: saturn-hue-shift 8s linear infinite;
+}
+
+

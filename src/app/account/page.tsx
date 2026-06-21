@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { User, Shield, Key, Database, ArrowLeft, CheckCircle2, Globe, Sparkles } from 'lucide-react';
+import { User, Shield, Key, Database, ArrowLeft, CheckCircle2, Globe, Sparkles, Sun, Moon } from 'lucide-react';
 import Link from 'next/link';
 import { ensureUserProfile, DEFAULT_AVATARS, UserProfile } from '@/utils/supabase/profile-helper';
 
@@ -31,6 +31,25 @@ export default function AccountPage() {
   
   // Database stats state
   const [stats, setStats] = useState({ scoresCount: 0, calendarNotesCount: 0 });
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme === 'dark' || (!savedTheme && prefersDark) ? 'dark' : 'light';
+    setTheme(initialTheme);
+  }, []);
+
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    window.dispatchEvent(new Event('theme-change'));
+  };
 
   useEffect(() => {
     async function loadUserData() {
@@ -403,6 +422,45 @@ export default function AccountPage() {
                   {loadingPassword ? 'Updating...' : 'Update Password'}
                 </button>
               </form>
+            </div>
+
+            {/* THEME & APPEARANCE SECTION */}
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+              <div className="flex items-center gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400">
+                  <Sun className="h-5 w-5 dark:hidden" />
+                  <Moon className="h-5 w-5 hidden dark:block" />
+                </div>
+                <div>
+                  <h3 className="font-bold">Theme & Appearance</h3>
+                  <p className="text-xs text-zinc-500">Toggle between light and dark display modes</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleThemeChange('light')}
+                  className={`flex-1 py-3 px-4 rounded border text-xs font-bold uppercase tracking-wider cursor-pointer text-center transition-all ${
+                    theme === 'light'
+                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black font-extrabold shadow-sm'
+                      : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-850 dark:text-zinc-400'
+                  }`}
+                >
+                  Light Mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleThemeChange('dark')}
+                  className={`flex-1 py-3 px-4 rounded border text-xs font-bold uppercase tracking-wider cursor-pointer text-center transition-all ${
+                    theme === 'dark'
+                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black font-extrabold shadow-sm'
+                      : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-850 dark:text-zinc-400'
+                  }`}
+                >
+                  Dark Mode
+                </button>
+              </div>
             </div>
           </div>
 

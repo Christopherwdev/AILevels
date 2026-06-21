@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { subjects } from '@/utils/subjects';
-import { Send, Image as ImageIcon, Paperclip, Hash, Users, ChevronLeft, Info, Smile, Mic, Heart } from 'lucide-react';
+import { subjects, getSubjectIcon } from '@/utils/subjects';
+import { Send, Image as ImageIcon, Paperclip, Hash, Users, ChevronLeft, Info, Mic, Heart, StopCircle, Trash2 } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -36,6 +36,14 @@ export default function ChatPage() {
   const [uploading, setUploading] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
+  
+  // Audio Recording State
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -80,7 +88,7 @@ export default function ChatPage() {
     }
     loadMessages();
 
-    // Subscribe to INSERT events for the table
+    // Subscribe to INSERT events
     const channelName = `chat-room-${activeRoom}`;
     const channel = supabase
       .channel(channelName)
@@ -175,27 +183,40 @@ export default function ChatPage() {
     try {
       const filePath = `chat/${activeRoom}/${Date.now()}_${file.name}`;
 
-      const { error } = await supabase.storage
+      const { error: storageErr } = await supabase.storage
         .from('chat-uploads')
         .upload(filePath, file);
 
-      if (error) throw error;
+      if (storageErr) {
+        console.error('Storage upload failed details:', storageErr);
+        throw new Error(`Upload failed: ${storageErr.message}`);
+      }
 
       const { data: urlData } = supabase.storage
         .from('chat-uploads')
         .getPublicUrl(filePath);
 
-      const isImage = file.type.startsWith('image/');
+      let fileType = 'file';
+      if (file.type.startsWith('image/')) {
+        fileType = 'image';
+      } else if (file.type.startsWith('audio/')) {
+        fileType = 'audio';
+      }
 
-      const { data } = await supabase.from('chat_messages').insert({
+      const { data, error: insertErr } = await supabase.from('chat_messages').insert({
         user_id: userId,
         username,
         room: activeRoom,
-        content: isImage ? '' : `📎 ${file.name}`,
+        content: fileType === 'image' ? '' : fileType === 'audio' ? '🎙️ Audio File' : `📎 ${file.name}`,
         file_url: urlData.publicUrl,
-        file_type: isImage ? 'image' : 'file',
+        file_type: fileType,
         file_name: file.name,
       }).select().single();
+
+      if (insertErr) {
+        console.error('Database message insert failed details:', insertErr);
+        throw new Error(`Db insert failed: ${insertErr.message}`);
+      }
 
       if (data) {
         setMessages(prev => {
@@ -203,11 +224,117 @@ export default function ChatPage() {
           return [...prev, data];
         });
       }
-    } catch (err) {
-      console.error('Upload failed:', err);
+    } catch (err: any) {
+      console.error('File Upload main routine exception:', err);
+      alert(`Upload failed: ${err.message || 'Check storage bucket creation and policy.'}`);
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Audio Recording Handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      
+      let mimeType = 'audio/webm';
+      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/ogg';
+      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/mp4';
+      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = '';
+
+      const options = mimeType ? { mimeType } : undefined;
+      const mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (audioChunksRef.current.length === 0) return;
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/wav' });
+        const file = new File([audioBlob], `voice-message-${Date.now()}.wav`, { type: audioBlob.type });
+        await uploadAudioBlob(file);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.error('Failed to start audio recording:', err);
+      alert('Could not access microphone. Please check site permissions.');
+    }
+  };
+
+  const stopRecording = (shouldSave: boolean) => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      if (!shouldSave) {
+        audioChunksRef.current = []; 
+      }
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  };
+
+  const uploadAudioBlob = async (file: File) => {
+    if (!userId) return;
+    setUploading(true);
+    try {
+      const filePath = `chat/${activeRoom}/${file.name}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('chat-uploads')
+        .upload(filePath, file);
+
+      if (uploadErr) {
+        console.error('Audio upload storage error:', uploadErr);
+        throw new Error(`Audio upload failed: ${uploadErr.message}`);
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('chat-uploads')
+        .getPublicUrl(filePath);
+
+      const { data, error: insertErr } = await supabase.from('chat_messages').insert({
+        user_id: userId,
+        username,
+        room: activeRoom,
+        content: '🎙️ Voice Message',
+        file_url: urlData.publicUrl,
+        file_type: 'audio',
+        file_name: 'Voice Message.wav',
+      }).select().single();
+
+      if (insertErr) {
+        console.error('Audio database message insert error:', insertErr);
+        throw new Error(`Audio insert failed: ${insertErr.message}`);
+      }
+
+      if (data) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === data.id)) return prev;
+          return [...prev, data];
+        });
+      }
+    } catch (err: any) {
+      console.error('Voice upload routine exception:', err);
+      alert(`Voice message failed: ${err.message || 'Check Supabase bucket.'}`);
+    }
+    setUploading(false);
   };
 
   const activeSubject = subjects.find(s => s.slug === activeRoom);
@@ -233,7 +360,12 @@ export default function ChatPage() {
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
-  // Generate fallback avatar background color based on name string hash
+  const formatDuration = (secs: number) => {
+    const mins = Math.floor(secs / 60);
+    const remaining = secs % 60;
+    return `${mins}:${remaining.toString().padStart(2, '0')}`;
+  };
+
   const getAvatarBg = (name: string) => {
     const colors = [
       'from-pink-500 to-rose-500',
@@ -252,7 +384,7 @@ export default function ChatPage() {
   return (
     <div className="h-[calc(100vh-4rem)] flex bg-white dark:bg-black overflow-hidden font-sans">
       {/* Sidebar — Room List */}
-      <aside className={`${showSidebar ? 'w-80' : 'w-0 overflow-hidden'} flex-shrink-0 border-r border-zinc-100 dark:border-zinc-900 flex flex-col transition-all duration-300 bg-white dark:bg-black`}>
+      <aside className={`${showSidebar ? 'w-full md:w-80' : 'w-0 overflow-hidden'} flex-shrink-0 border-r border-zinc-100 dark:border-zinc-900 flex flex-col transition-all duration-300 bg-white dark:bg-black`}>
         <div className="p-5 border-b border-zinc-50 dark:border-zinc-950">
           <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Messages
@@ -262,20 +394,30 @@ export default function ChatPage() {
           {subjects.map(s => (
             <button
               key={s.slug}
-              onClick={() => setActiveRoom(s.slug)}
+              onClick={() => {
+                setActiveRoom(s.slug);
+                if (window.innerWidth < 768) {
+                  setShowSidebar(false);
+                }
+              }}
               className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-colors cursor-pointer ${
                 activeRoom === s.slug
                   ? 'bg-zinc-50 dark:bg-zinc-900/50'
                   : 'hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20'
               }`}
             >
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner select-none relative"
-                style={{ background: `linear-gradient(135deg, ${s.color}20, ${s.color}40)` }}
-              >
-                {s.icon}
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-black bg-emerald-500" />
-              </div>
+              {(() => {
+                const RoomIcon = getSubjectIcon(s.iconName);
+                return (
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-black flex-shrink-0 relative"
+                    style={{ backgroundColor: s.color }}
+                  >
+                    <RoomIcon size={20} className="text-white" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-black bg-emerald-500" />
+                  </div>
+                );
+              })()}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                   {s.name}
@@ -299,8 +441,8 @@ export default function ChatPage() {
       </aside>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-black">
-        {/* Chat Header (Instagram Style) */}
+      <div className={`flex-1 flex flex-col min-w-0 bg-white dark:bg-black ${showSidebar ? 'hidden md:flex' : 'flex'}`}>
+        {/* Chat Header */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-zinc-100 dark:border-zinc-900 bg-white dark:bg-black flex-shrink-0 z-10">
           <div className="flex items-center gap-3">
             <button
@@ -309,12 +451,17 @@ export default function ChatPage() {
             >
               <ChevronLeft size={22} className="text-zinc-700 dark:text-zinc-300" />
             </button>
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-base"
-              style={{ background: `linear-gradient(135deg, ${activeSubject?.color}15, ${activeSubject?.color}35)` }}
-            >
-              {activeSubject?.icon}
-            </div>
+            {(() => {
+              const HeaderIcon = activeSubject ? getSubjectIcon(activeSubject.iconName) : null;
+              return HeaderIcon ? (
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center border-2 border-black flex-shrink-0"
+                  style={{ backgroundColor: activeSubject?.color }}
+                >
+                  <HeaderIcon size={16} className="text-white" />
+                </div>
+              ) : null;
+            })()}
             <div>
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{activeSubject?.name}</h3>
               <p className="text-[11px] text-emerald-500 font-medium">Active in room</p>
@@ -330,12 +477,17 @@ export default function ChatPage() {
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center max-w-xl mx-auto">
               <div className="text-center space-y-2">
-                <div
-                  className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl shadow-inner select-none mb-4"
-                  style={{ background: `linear-gradient(135deg, ${activeSubject?.color}15, ${activeSubject?.color}35)` }}
-                >
-                  {activeSubject?.icon}
-                </div>
+                {(() => {
+                  const EmptyIcon = activeSubject ? getSubjectIcon(activeSubject.iconName) : null;
+                  return EmptyIcon ? (
+                    <div
+                      className="w-20 h-20 rounded-full mx-auto flex items-center justify-center border-2 border-black shadow-inner select-none mb-4"
+                      style={{ backgroundColor: activeSubject?.color }}
+                    >
+                      <EmptyIcon size={32} className="text-white" />
+                    </div>
+                  ) : null;
+                })()}
                 <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">No Messages Yet</p>
                 <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs mx-auto">
                   Start the conversation in the #{activeSubject?.name?.toLowerCase()} study group.
@@ -415,6 +567,15 @@ export default function ChatPage() {
                           {msg.file_type === 'image' && msg.file_url && (
                             <img src={msg.file_url} alt="shared file" className="max-w-full max-h-64 rounded-lg object-contain my-1 select-none" />
                           )}
+                          {msg.file_type === 'audio' && msg.file_url && (
+                            <div className="py-1 min-w-[240px]">
+                              <audio 
+                                src={msg.file_url} 
+                                controls 
+                                className="w-full max-w-xs filter dark:invert" 
+                              />
+                            </div>
+                          )}
                           {msg.file_type === 'file' && msg.file_url && (
                             <a
                               href={msg.file_url}
@@ -425,7 +586,7 @@ export default function ChatPage() {
                               📎 {msg.file_name || 'Attached File'}
                             </a>
                           )}
-                          {msg.content && (
+                          {msg.content && msg.file_type !== 'audio' && (
                             <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           )}
                         </div>
@@ -437,8 +598,6 @@ export default function ChatPage() {
                           </span>
                         )}
                       </div>
-
-                      {/* Avatar right side (optional/skipped for own user, Instagram doesn't show own avatar next to bubble) */}
                     </div>
                   </React.Fragment>
                 );
@@ -452,81 +611,115 @@ export default function ChatPage() {
         <div className="p-4 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-black flex-shrink-0 z-10">
           <div className="max-w-4xl mx-auto flex items-center gap-2 border border-zinc-200 dark:border-zinc-800 rounded-full px-4 py-2 bg-white dark:bg-black">
             
-            {/* Attachment Inputs */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileUpload}
-              accept="image/*,.pdf,.doc,.docx,.txt"
-            />
-            
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="p-1 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-full transition-colors cursor-pointer text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
-              title="Add file"
-            >
-              <Paperclip size={18} />
-            </button>
-            
-            <button
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e) => handleFileUpload(e as any);
-                input.click();
-              }}
-              disabled={uploading}
-              className="p-1 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-full transition-colors cursor-pointer text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 mr-1"
-              title="Add image"
-            >
-              <ImageIcon size={18} />
-            </button>
-
-            {/* Input Element */}
-            <input
-              type="text"
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}}
-              placeholder="Message..."
-              className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none border-0 py-1"
-            />
-
-            {uploading && (
-              <span className="text-[10px] text-zinc-400 font-bold animate-pulse mr-2 select-none">Sending file...</span>
-            )}
-
-            {/* Conditionally show Send text button like Instagram, fallback to icon icons if empty */}
-            {newMessage.trim() ? (
-              <button
-                onClick={sendMessage}
-                className="px-3 py-1 text-sm font-bold text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition-colors cursor-pointer select-none"
-              >
-                Send
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="p-1 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer"
-                  title="Voice Message"
-                >
-                  <Mic size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewMessage("❤️");
-                  }}
-                  className="p-1 text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
-                  title="Send Love"
-                >
-                  <Heart size={18} />
-                </button>
+            {isRecording ? (
+              // Audio Recording State layout
+              <div className="flex-1 flex items-center justify-between py-1 bg-red-50/50 dark:bg-red-950/10 rounded-full px-2">
+                <div className="flex items-center gap-2 ml-1">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                  <span className="text-xs font-bold text-red-500">
+                    Recording ({formatDuration(recordingDuration)})
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => stopRecording(false)}
+                    className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-500 hover:text-red-500 rounded-full cursor-pointer transition-colors"
+                    title="Discard recording"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => stopRecording(true)}
+                    className="flex items-center gap-1.5 bg-red-500 hover:bg-red-655 text-white text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer transition-colors"
+                    title="Send audio"
+                  >
+                    <StopCircle size={14} />
+                    <span>Send</span>
+                  </button>
+                </div>
               </div>
+            ) : (
+              // Normal inputs
+              <>
+                {/* Attachment Inputs */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  accept="image/*,audio/*,.pdf,.doc,.docx,.txt"
+                />
+                
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="p-1 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-full transition-colors cursor-pointer text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
+                  title="Add file"
+                >
+                  <Paperclip size={18} />
+                </button>
+                
+                <button
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => handleFileUpload(e as any);
+                    input.click();
+                  }}
+                  disabled={uploading}
+                  className="p-1 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-full transition-colors cursor-pointer text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 mr-1"
+                  title="Add image"
+                >
+                  <ImageIcon size={18} />
+                </button>
+
+                {/* Input Element */}
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}}
+                  placeholder="Message..."
+                  className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none border-0 py-1"
+                />
+
+                {uploading && (
+                  <span className="text-[10px] text-zinc-400 font-bold animate-pulse mr-2 select-none">Sending...</span>
+                )}
+
+                {/* Conditionally show Send text button like Instagram, fallback to icon icons if empty */}
+                {newMessage.trim() ? (
+                  <button
+                    onClick={sendMessage}
+                    className="px-3 py-1 text-sm font-bold text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition-colors cursor-pointer select-none"
+                  >
+                    Send
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      disabled={uploading}
+                      className="p-1 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer"
+                      title="Voice Message"
+                    >
+                      <Mic size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewMessage("❤️");
+                      }}
+                      className="p-1 text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
+                      title="Send Love"
+                    >
+                      <Heart size={18} />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
