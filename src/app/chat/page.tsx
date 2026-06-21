@@ -73,7 +73,7 @@ export default function ChatPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth');
+        setLoading(false);
         return;
       }
       setUserId(user.id);

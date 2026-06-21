@@ -59,7 +59,7 @@ export default function CalendarPage() {
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/auth'); return; }
+      if (!user) { setLoading(false); return; }
       setUserId(user.id);
       const { data } = await supabase
         .from('dashboard_calendar')

@@ -32,17 +32,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtectedRoute =
-    request.nextUrl.pathname.startsWith('/dashboard') ||
-    request.nextUrl.pathname.startsWith('/calendar') ||
-    request.nextUrl.pathname.startsWith('/past-papers') ||
-    request.nextUrl.pathname.startsWith('/account');
-
-  if (!user && isProtectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/auth';
-    return NextResponse.redirect(url);
-  }
+  // Do not redirect unauthenticated users to /auth. Let pages load.
 
   if (user && request.nextUrl.pathname.startsWith('/auth')) {
     const url = request.nextUrl.clone();

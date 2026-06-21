@@ -6,7 +6,7 @@ import OverlayWindowsManager from './OverlayWindowsManager';
 import Dock from './Dock';
 import { createClient } from '@/utils/supabase/client';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowRight, Lock } from 'lucide-react';
+import { ArrowRight, Lock, X } from 'lucide-react';
 
 export default function OverlayWrapper({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -15,6 +15,7 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
 
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [activeAuthPopup, setActiveAuthPopup] = useState(false);
 
   // Form states for the popup modal
   const [email, setEmail] = useState('');
@@ -42,6 +43,62 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
       subscription.unsubscribe();
     };
   }, [supabase]);
+
+  // Intercept interactions for unauthenticated users
+  useEffect(() => {
+    if (loading || user) {
+      setActiveAuthPopup(false);
+      return;
+    }
+
+    const handleInteraction = (e: Event) => {
+      if (activeAuthPopup) return;
+
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      // Find if the event target is inside the <main> element
+      const mainEl = document.querySelector('main');
+      if (!mainEl || !mainEl.contains(target)) return;
+
+      const path = window.location.pathname;
+      const isPastPapersPage = path.startsWith('/past-papers');
+      const isHomePage = path === '/';
+
+      if (isHomePage) return;
+
+      if (isPastPapersPage) {
+        // Only trigger auth popup if writing answers in the textarea
+        const isTextarea = target.tagName === 'TEXTAREA';
+        if (isTextarea) {
+          e.preventDefault();
+          e.stopPropagation();
+          if ('blur' in target) (target as any).blur();
+          setActiveAuthPopup(true);
+        }
+        return;
+      }
+
+      // On all other dashboard pages:
+      const tagName = target.tagName;
+      const isInteractive = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(tagName) || target.closest('button');
+      
+      if (isInteractive) {
+        e.preventDefault();
+        e.stopPropagation();
+        if ('blur' in target) (target as any).blur();
+        setActiveAuthPopup(true);
+      }
+    };
+
+    document.addEventListener('focusin', handleInteraction, true);
+    document.addEventListener('click', handleInteraction, true);
+
+    return () => {
+      document.removeEventListener('focusin', handleInteraction, true);
+      document.removeEventListener('click', handleInteraction, true);
+    };
+  }, [loading, user, activeAuthPopup]);
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,9 +164,7 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
   };
 
   // Determine if path is protected
-  const PROTECTED_PATHS = ['/dashboard', '/calendar', '/chat', '/notes', '/account', '/learn'];
-  const isProtectedPath = PROTECTED_PATHS.some(path => pathname.startsWith(path));
-  const showAuthPopup = !loading && !user && isProtectedPath;
+  const showAuthPopup = !loading && !user && activeAuthPopup;
 
   return (
     <OverlayProvider>
@@ -121,8 +176,22 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
 
       {/* Modern, Creative Apple-style Gateway Popup */}
       {showAuthPopup && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/30 dark:bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-300">
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setActiveAuthPopup(false);
+            }
+          }}
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/30 dark:bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-300"
+        >
           <div className="w-full max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl rounded-3xl p-8 relative z-10 transition-all duration-300 animate-in zoom-in-95 duration-250 text-center">
+            
+            <button 
+              onClick={() => setActiveAuthPopup(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-850 cursor-pointer"
+            >
+              <X size={16} />
+            </button>
             
             <div className="mb-6 flex items-center justify-center gap-1.5 select-none">
               <img

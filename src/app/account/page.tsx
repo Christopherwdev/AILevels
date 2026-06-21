@@ -56,7 +56,7 @@ export default function AccountPage() {
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/auth'); return; }
+      if (!user) return;
       setEmail(user.email ?? null);
       const { profile: p, isFallback: fb } = await ensureUserProfile(supabase, user.id, user.email ?? null);
       if (p) {

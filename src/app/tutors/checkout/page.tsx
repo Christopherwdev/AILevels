@@ -31,7 +31,7 @@ export default function CheckoutPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth');
+        setLoading(false);
         return;
       }
 

@@ -122,7 +122,7 @@ export default function TutorsPage() {
     async function checkAuth() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth');
+        setLoading(false);
         return;
       }
       setLoading(false);
