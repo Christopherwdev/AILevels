@@ -171,7 +171,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                   alt="Precision Logo"
                   className="h-6 w-auto transition-all duration-300 group-hover:opacity-90"
                 />
-                <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-300">
+                <span className="bg-zinc-900 text-white dark:bg-zinc-800 dark:text-zinc-100 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-300">
                   Edu
                 </span>
               </Link>
@@ -206,7 +206,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                     <>
                       {/* Dropdown Backdrop */}
                       <div className="fixed inset-0 z-[99] bg-transparent cursor-default animate-none" onClick={() => setIsLearnMenuOpen(false)} />
-                      <div className="absolute left-0 mt-3 w-56 bg-white border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-[100] shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="absolute left-0 mt-3 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 z-[100] shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
                         <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400">IAL Subjects</div>
                         {subjects.filter(s => s.level === 'IAL').map(s => {
                           const ItemIcon = getSubjectIcon(s.iconName);
@@ -275,7 +275,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                       className="flex items-center gap-2 px-2 py-1.5 border border-zinc-200 dark:border-zinc-850 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer text-zinc-850 dark:text-zinc-150 hover:bg-zinc-50 dark:hover:bg-zinc-855 relative z-45"
                     >
                       {renderAvatar(avatarUrl, "h-6 w-6")}
-                      <span>{username || 'Account'}</span>
+                      <span className="hidden sm:inline-block truncate max-w-[100px]">{username || 'Account'}</span>
                       <ChevronDown size={13} className={`transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
    
@@ -345,10 +345,8 @@ export default function Navbar({ userEmail }: NavbarProps) {
           />
 
           {/* Sidebar Panel */}
-          <div className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 flex flex-col justify-between z-20 animate-in slide-in-from-left duration-300">
-            <div className="space-y-6">
-              {/* Header: Logo & Close */}
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-2xl p-0 flex flex-col justify-between z-20 animate-in slide-in-from-left duration-300">
+            <div className="flex items-center p-6 justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
                 <Link 
                   href="/" 
                   onClick={() => setIsSidebarOpen(false)} 
@@ -359,7 +357,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                     alt="Precision Logo"
                     className="h-5 w-auto dark:invert"
                   />
-                  <span className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-955 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
+                  <span className="bg-zinc-900 text-white dark:bg-zinc-800 dark:text-zinc-100 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
                     Edu
                   </span>
                 </Link>
@@ -370,9 +368,12 @@ export default function Navbar({ userEmail }: NavbarProps) {
                   <X size={18} />
                 </button>
               </div>
+            <div className="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-1">
+              {/* Header: Logo & Close */}
+             
 
               {/* Navigation Links */}
-              <nav className="flex flex-col gap-1">
+              <nav className="flex flex-col gap-1 px-4">
                 <Link
                   href="/dashboard"
                   onClick={() => setIsSidebarOpen(false)}
@@ -437,7 +438,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
                 {/* Learn section in sidebar */}
                 <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                   <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Learn Subjects</div>
-                  <div className="max-h-40 overflow-y-auto pr-1 flex flex-col gap-0.5">
+                  <div className="pr-1 flex flex-col gap-0.5">
                     {subjects.map(s => {
                       const ItemIcon = getSubjectIcon(s.iconName);
                       return (
@@ -460,10 +461,10 @@ export default function Navbar({ userEmail }: NavbarProps) {
             </div>
 
             {/* Bottom session area */}
-            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="p-2 border-t border-zinc-100 dark:border-zinc-800">
               {userEmail ? (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 px-3">
+                  <div className="flex items-center gap-3 px-3 pt-4">
                     {renderAvatar(avatarUrl, "h-8 w-8")}
                     <div className="flex-1 min-w-0 text-left">
                       <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">{username || 'Account'}</p>

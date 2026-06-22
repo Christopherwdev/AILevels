@@ -1182,7 +1182,7 @@ export default function App() {
     return (
         <div 
             id="app-container" 
-            className="w-full flex-1 flex flex-col box-border relative min-h-0 bg-zinc-50 dark:bg-zinc-950"
+            className="w-full flex-1 flex flex-col box-border relative min-h-0 bg-zinc-50 dark:bg-zinc-950 mobile-h-dvh"
         >
             <Script src="https://cdn.jsdelivr.net/npm/apexcharts" strategy="lazyOnload" onLoad={updateChart} />
 

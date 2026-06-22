@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { 
   ArrowLeft, Printer, Download, Play, Pause, RotateCcw, Settings, 
   Columns, Maximize2, BookOpen, Edit3, Volume2, 
@@ -585,13 +586,16 @@ function ViewerContent() {
             <header className="h-12 bg-white dark:bg-black border-b border-zinc-200 dark:border-zinc-800 px-2 flex justify-between items-center sticky top-0 z-50 flex-shrink-0">
                 {/* Header Left */}
                 <div className="flex-1 flex items-center gap-3 min-w-0">
-                    <button 
-                        onClick={() => window.close()} 
-                        className="flex items-center gap-1 px-2.5 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-xs font-bold transition cursor-pointer text-zinc-700 dark:text-zinc-300 h-8"
-                    >
-                        <ArrowLeft size={13} />
-                        Exit
-                    </button>
+                    <Link href="/past-papers" className="flex items-center gap-1.5 group pr-1">
+                        <img
+                            src="/Precision Logo.svg"
+                            alt="Precision Logo"
+                            className="h-5 w-auto transition-all duration-300 group-hover:opacity-90 dark:invert"
+                        />
+                        <span className="bg-zinc-900 text-white dark:bg-zinc-800 dark:text-zinc-100 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider transition-all duration-300">
+                            Edu
+                        </span>
+                    </Link>
                     <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden lg:block"></div>
                     <div className="flex flex-col hidden lg:flex">
                         <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider leading-none">

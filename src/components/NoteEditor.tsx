@@ -66,6 +66,9 @@ export default function NoteEditor({ noteId, onDelete, toolbarPrefix, toolbarSuf
     const handleMouseMove = (e: MouseEvent) => {
       onMove(e.clientX, e);
     };
+    const handleDragStart = (e: DragEvent) => {
+      e.preventDefault();
+    };
 
     el.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
     el.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
@@ -73,6 +76,7 @@ export default function NoteEditor({ noteId, onDelete, toolbarPrefix, toolbarSuf
     el.addEventListener('touchcancel', onEnd, { capture: true });
 
     el.addEventListener('mousedown', handleMouseDown, { capture: true });
+    el.addEventListener('dragstart', handleDragStart, { capture: true });
     window.addEventListener('mousemove', handleMouseMove, { capture: true });
     window.addEventListener('mouseup', onEnd, { capture: true });
 
@@ -83,6 +87,7 @@ export default function NoteEditor({ noteId, onDelete, toolbarPrefix, toolbarSuf
       el.removeEventListener('touchcancel', onEnd, { capture: true } as EventListenerOptions);
 
       el.removeEventListener('mousedown', handleMouseDown, { capture: true } as EventListenerOptions);
+      el.removeEventListener('dragstart', handleDragStart, { capture: true } as EventListenerOptions);
       window.removeEventListener('mousemove', handleMouseMove, { capture: true } as EventListenerOptions);
       window.removeEventListener('mouseup', onEnd, { capture: true } as EventListenerOptions);
     };

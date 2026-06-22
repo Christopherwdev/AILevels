@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
-import { Plus, Search, FileText, NotebookText } from 'lucide-react';
+import { Plus, Search, FileText, NotebookText, Settings } from 'lucide-react';
 import NoteEditor from '@/components/NoteEditor';
 
 interface Note {
@@ -18,6 +19,7 @@ export default function NotesPage() {
   const router = useRouter();
   const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>('Anonymous');
   
   // Notes states
   const [notes, setNotes] = useState<Note[]>([]);
@@ -38,6 +40,16 @@ export default function NotesPage() {
       }
       setUserId(user.id);
       
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.username) {
+        setUsername(profile.username);
+      }
+
       // Load notes
       const { data } = await supabase
         .from('notes')
@@ -160,19 +172,8 @@ export default function NotesPage() {
     return titleMatch || contentMatch;
   });
 
-  if (loading) {
-    return (
-      <div className="h-[calc(100vh-4rem)] mobile-h-dvh flex items-center justify-center bg-white dark:bg-zinc-950">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-8 h-8 rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-800 dark:border-t-zinc-100 animate-spin" />
-          <p className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">Loading notes...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-[calc(100vh-4rem)] mobile-h-dvh flex flex-col md:flex-row bg-white dark:bg-zinc-950 overflow-hidden font-sans relative">
+    <div className="h-[calc(100vh-4rem)] mobile-h-dvh flex bg-white dark:bg-black overflow-hidden font-sans relative">
 
       {/* ── MOBILE: Backdrop ── */}
       {isSidebarOpen && (
@@ -186,40 +187,40 @@ export default function NotesPage() {
       <aside
         className={`
           fixed top-16 left-0 bottom-0 z-40 w-72 flex flex-col
-          bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800
+          bg-white dark:bg-black border-r border-zinc-100 dark:border-zinc-900
           shadow-2xl transition-transform duration-300 ease-in-out
           md:hidden
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         {/* Sidebar header */}
-        <div className="p-4 flex justify-between items-center gap-3 border-b border-zinc-100 dark:border-zinc-800">
-          <h2 className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 uppercase">Study Notes</h2>
-          <button
-            onClick={handleCreateNote}
-            className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[10px] font-black rounded hover:opacity-90 transition cursor-pointer uppercase tracking-wider"
-          >
-            <Plus size={12} />
-            <span>New</span>
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 relative">
-          <input
-            type="text"
-            placeholder="Search notes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-full text-xs bg-white dark:bg-zinc-900/50 dark:text-zinc-100 outline-none focus:border-zinc-450"
-          />
-          <Search className="absolute left-[24px] top-[22px] text-zinc-400" size={14} />
+        <div className="p-5 border-b border-zinc-50 dark:border-zinc-950 flex flex-col gap-4 select-none">
+          <div className="flex justify-between items-center w-full">
+            <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Study Notes</h2>
+            <button
+              onClick={handleCreateNote}
+              className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[10px] font-black rounded hover:opacity-90 transition cursor-pointer uppercase tracking-wider"
+            >
+              <Plus size={12} />
+              <span>New</span>
+            </button>
+          </div>
+          {/* Search Notes */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-xs bg-grey-bg dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-700 text-zinc-900 dark:text-zinc-100"
+            />
+          </div>
         </div>
 
         {/* Notes list */}
-        <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex-1 overflow-y-auto no-scrollbar py-2">
           {filteredNotes.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 text-xs">No notes found.</div>
+            <div className="text-center py-12 text-zinc-400 text-xs w-full select-none">No notes found.</div>
           ) : (
             filteredNotes.map(n => (
               <button
@@ -228,16 +229,16 @@ export default function NotesPage() {
                   setActiveNoteId(n.id);
                   setIsSidebarOpen(false);
                 }}
-                className={`w-full flex flex-col p-4 py-3 text-left transition-all border-b border-zinc-100 dark:border-zinc-800/60 cursor-pointer ${
+                className={`w-full flex flex-col px-5 py-3 text-left transition-all border-b border-zinc-50 dark:border-zinc-950/65 cursor-pointer ${
                   activeNoteId === n.id
-                    ? 'bg-zinc-100 dark:bg-zinc-900 font-extrabold'
-                    : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/30'
+                    ? 'bg-grey-bg dark:bg-zinc-900/60 font-extrabold'
+                    : 'hover:bg-grey-hover dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate w-full">
                   {n.title || 'Untitled Note'}
                 </span>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate w-full mt-0.5">
+                <p className="text-[10px] text-zinc-405 dark:text-zinc-500 truncate w-full mt-0.5">
                   {n.content ? n.content.replace(/<[^>]*>/g, '').substring(0, 50) : 'No content'}
                 </p>
                 <span className="text-[9px] text-zinc-400 font-semibold mt-1.5 uppercase tracking-wide select-none">
@@ -246,6 +247,32 @@ export default function NotesPage() {
               </button>
             ))
           )}
+        </div>
+
+        {/* Mobile footer user profile */}
+        <div className="p-4 border-t border-zinc-100 dark:border-zinc-900 flex items-center justify-between gap-3 bg-white dark:bg-black select-none">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full border-2 border-rose-500 bg-white flex items-center justify-center shrink-0">
+              <span className="text-rose-500 font-bold text-sm uppercase">
+                {username.charAt(0)}
+              </span>
+            </div>
+            <div className="flex flex-col min-w-0 text-left">
+              <p className="text-[13px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-tight">
+                {username}
+              </p>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-550 font-medium mt-0.5">
+                Logged in
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/account"
+            className="p-1.5 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors"
+            title="User Settings"
+          >
+            <Settings size={14} />
+          </Link>
         </div>
       </aside>
 
@@ -260,45 +287,45 @@ export default function NotesPage() {
         </button>
       )}
 
-      {/* ── DESKTOP: Left Panel ── */}
-      <aside className="hidden md:flex w-80 shrink-0 flex-col mt-4 px-0">
+      {/* ── DESKTOP: Left Panel (Styled exactly like Chat page sidebar) ── */}
+      <aside className="hidden md:flex w-80 shrink-0 flex-col border-r border-zinc-100 dark:border-zinc-900 bg-white dark:bg-black">
         {/* Header with "+ New Note" */}
-        <div className="p-0 pb-4 ml-4 flex justify-between items-center gap-3 pr-0">
-          <h2 className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 uppercase">Study Notes</h2>
-          <button
-            onClick={handleCreateNote}
-            className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[10px] font-black rounded hover:opacity-90 transition cursor-pointer uppercase tracking-wider"
-          >
-            <Plus size={12} />
-            <span>New</span>
-          </button>
-        </div>
-
-        {/* Search Notes */}
-        <div className="p-0 m-0 ml-4 mb-4 relative pr-0">
-          <input
-            type="text"
-            placeholder="Search notes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-full text-xs bg-white dark:bg-zinc-900/50 dark:text-zinc-100 outline-none focus:border-zinc-450"
-          />
-          <Search className="absolute left-[12px] top-2 text-zinc-400" size={14} />
+        <div className="p-5 border-b border-zinc-50 dark:border-zinc-950 flex flex-col gap-4 select-none">
+          <div className="flex justify-between items-center w-full">
+            <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Study Notes</h2>
+            <button
+              onClick={handleCreateNote}
+              className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[10px] font-black rounded hover:opacity-90 transition cursor-pointer uppercase tracking-wider"
+            >
+              <Plus size={12} />
+              <span>New</span>
+            </button>
+          </div>
+          {/* Search Notes */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-xs bg-grey-bg dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-700 text-zinc-900 dark:text-zinc-100"
+            />
+          </div>
         </div>
 
         {/* Notes list */}
-        <div className="flex md:flex-col flex-row overflow-x-auto md:overflow-y-auto gap-2 md:space-y-1 md:gap-0 no-scrollbar pr-0 ml-4">
+        <div className="flex-1 overflow-y-auto no-scrollbar py-2">
           {filteredNotes.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 text-xs w-full">No notes found.</div>
+            <div className="text-center py-12 text-zinc-400 text-xs w-full select-none">No notes found.</div>
           ) : (
             filteredNotes.map(n => (
-              <div key={n.id} className="relative group/card pr-0">
+              <div key={n.id} className="relative group/card">
                 <button
                   onClick={() => setActiveNoteId(n.id)}
-                  className={`w-full flex flex-col p-4 py-2 text-left transition-all border border-transparent cursor-pointer rounded-lg ${
+                  className={`w-full flex flex-col px-5 py-3 text-left transition-all border-b border-zinc-50 dark:border-zinc-950/65 cursor-pointer ${
                     activeNoteId === n.id
-                      ? 'bg-[#00000010] dark:bg-zinc-900'
-                      : 'hover:bg-zinc-100/50 dark:hover:bg-zinc-900/10'
+                      ? 'bg-grey-bg dark:bg-zinc-900/60 font-extrabold'
+                      : 'hover:bg-grey-hover dark:hover:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-1 w-full">
@@ -306,10 +333,10 @@ export default function NotesPage() {
                       {n.title || 'Untitled Note'}
                     </span>
                   </div>
-                  <p className={`text-[10px] text-zinc-400 dark:text-zinc-500 mb-1 truncate w-full`}>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1 truncate w-full">
                     {n.content ? n.content.replace(/<[^>]*>/g, '').substring(0, 60) : 'No content'}
                   </p>
-                  <span className="text-[9px] text-zinc-400 font-semibold mt-0 uppercase tracking-wide select-none">
+                  <span className="text-[9px] text-zinc-400 font-semibold mt-0.5 uppercase tracking-wide select-none">
                     {new Date(n.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                   </span>
                 </button>
@@ -317,17 +344,43 @@ export default function NotesPage() {
             ))
           )}
         </div>
+
+        {/* Desktop footer user profile */}
+        <div className="p-4 border-t border-zinc-100 dark:border-zinc-900 flex items-center justify-between gap-3 bg-white dark:bg-black select-none">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full border-2 border-rose-500 bg-white flex items-center justify-center shrink-0">
+              <span className="text-rose-500 font-bold text-sm uppercase">
+                {username.charAt(0)}
+              </span>
+            </div>
+            <div className="flex flex-col min-w-0 text-left">
+              <p className="text-[13px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-tight">
+                {username}
+              </p>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-550 font-medium mt-0.5">
+                Logged in
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/account"
+            className="p-1.5 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors"
+            title="User Settings"
+          >
+            <Settings size={14} />
+          </Link>
+        </div>
       </aside>
 
-      {/* RIGHT PANEL: EDITOR OR PLACEHOLDER */}
-      <div className="flex-1 flex mx-4 mb-4 md:m-4 md:mb-0 shadow-lg border border-zinc-200 dark:border-zinc-800 rounded flex-col min-w-0 bg-white dark:bg-zinc-950 overflow-hidden">
+      {/* RIGHT PANEL: FLAT EDITOR (Styled exactly like Chat main view) */}
+      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-black overflow-hidden">
         {activeNoteId ? (
           <NoteEditor noteId={activeNoteId} onDelete={handleNoteDeleted} />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-zinc-400 select-none bg-zinc-50/10 dark:bg-zinc-900/5">
             <FileText size={48} className="mb-3 opacity-30 text-zinc-500" />
             <h3 className="font-extrabold text-sm uppercase tracking-wide mb-1 text-zinc-800 dark:text-zinc-200">Notes Workspace</h3>
-            <p className="text-xs text-center max-w-sm text-zinc-400 dark:text-zinc-500 leading-relaxed">
+            <p className="text-xs text-center max-w-sm text-zinc-400 dark:text-zinc-550 leading-relaxed">
               Select a study note from the left sidebar to begin editing here.
             </p>
           </div>

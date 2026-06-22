@@ -188,11 +188,14 @@ export default function CalendarPage() {
   };
 
   const HIGHLIGHT_COLORS: Record<string, string> = {
-    green: '#53D769', red: '#FC3D39', blue: '#147EFB', yellow: '#FFCC00',
+    green: 'var(--color-green-highlight)',
+    red: 'var(--color-red-highlight)',
+    blue: 'var(--color-blue-highlight)',
+    yellow: 'var(--color-yellow-highlight)',
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-955 text-zinc-900 dark:text-zinc-100 flex flex-col relative">
+    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col relative">
 
       {/* Floating Control Panel */}
       {isPanelOpen && (
@@ -285,7 +288,7 @@ export default function CalendarPage() {
                           <div key={i} className="text-center py-1 text-[9px] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{d}</div>
                         ))}
                         {gridItems.map((date, idx) => {
-                          if (!date) return <div key={`e-${idx}`} className="h-16 sm:h-24 bg-zinc-50/20 dark:bg-zinc-955/10 rounded-lg border border-transparent" />;
+                          if (!date) return <div key={`e-${idx}`} className="h-16 sm:h-24 bg-zinc-50/20 dark:bg-zinc-950/10 rounded-lg border border-transparent" />;
                           const dateStr = date.toISOString().slice(0, 10);
                           const highlightColor = calendarHighlights[dateStr] || 'none';
                           const solidColor = HIGHLIGHT_COLORS[highlightColor];
