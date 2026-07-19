@@ -15,8 +15,7 @@ interface BookedTutor {
 
 const tutorsList = [
   { id: 'tutor-caris', avatar: '🧑‍🔬' },
-  { id: 'tutor-toby', avatar: '👨‍⚕️' },
-  { id: 'tutor-donata', avatar: '👩‍🔬' }
+  { id: 'tutor-toby', avatar: '👨‍⚕️' }
 ];
 
 export default function MyTutorsPage() {

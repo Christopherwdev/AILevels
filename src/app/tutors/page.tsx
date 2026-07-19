@@ -90,33 +90,6 @@ const tutors: Tutor[] = [
       { id: 'st-12', day: 'Sat', time: '15:00', available: true },
     ],
   },
-  {
-    id: 'tutor-donata',
-    name: 'Donata Yip',
-    avatar: '👩‍🔬',
-    subjects: ['Biology', 'Chemistry'],
-    rating: 4.8,
-    reviews: 24,
-    hourlyRate: 280,
-    currency: 'HKD',
-    bio: 'The Hong Kong Polytechnic University. My deep love for science has shaped both my academic success and the way I teach. I take time to understand each learner, teach students to think like examiners, and build their confidence.',
-    qualifications: ['The Hong Kong Polytechnic University', 'IAL Biology & Chemistry specialist', 'Exam technique focused', 'Personalised study plans'],
-    languages: ['English', 'Cantonese'],
-    schedule: [
-      { id: 'sd-1', day: 'Mon', time: '15:00', available: true },
-      { id: 'sd-2', day: 'Mon', time: '16:00', available: true },
-      { id: 'sd-3', day: 'Tue', time: '15:00', available: true },
-      { id: 'sd-4', day: 'Tue', time: '16:00', available: true },
-      { id: 'sd-5', day: 'Wed', time: '15:00', available: false },
-      { id: 'sd-6', day: 'Wed', time: '16:00', available: true },
-      { id: 'sd-7', day: 'Thu', time: '15:00', available: true },
-      { id: 'sd-8', day: 'Thu', time: '16:00', available: true },
-      { id: 'sd-9', day: 'Fri', time: '15:00', available: true },
-      { id: 'sd-10', day: 'Fri', time: '16:00', available: false },
-      { id: 'sd-11', day: 'Sat', time: '09:00', available: true },
-      { id: 'sd-12', day: 'Sat', time: '10:00', available: true },
-    ],
-  },
 ];
 
 export default function TutorsPage() {

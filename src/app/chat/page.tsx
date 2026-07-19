@@ -25,8 +25,7 @@ interface TutorContact {
 
 const tutorsList = [
   { id: 'tutor-caris', name: 'Caris Ng', avatar: '🧑‍🔬', role: 'Maths & Physics Tutor' },
-  { id: 'tutor-toby', name: 'Toby Leung', avatar: '👨‍⚕️', role: 'IELTS & Vet Prep Tutor' },
-  { id: 'tutor-donata', name: 'Donata Yip', avatar: '👩‍🔬', role: 'Biology & Chemistry Tutor' }
+  { id: 'tutor-toby', name: 'Toby Leung', avatar: '👨‍⚕️', role: 'IELTS & Vet Prep Tutor' }
 ];
 
 export default function ChatPage() {
