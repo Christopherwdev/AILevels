@@ -146,71 +146,375 @@
   color: #71717a !important;
 }
 
-/* Base card styling (flat, no shadow) */
-.portal-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--card-border);
+/* Chess-style typography classes */
+.chess-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--foreground);
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+@media (min-width: 640px) {
+  .chess-title {
+    font-size: 3.75rem;
+  }
+}
+@media (min-width: 768px) {
+  .chess-title {
+    font-size: 4.5rem;
+  }
 }
 
-/* Notion Custom Button Classes */
-.btn-notion-white {
-  background-color: var(--background);
+.chess-section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--foreground);
-  border: 1px solid rgba(120, 120, 120, 0.15);
-  border-radius: 6px;
-  padding: 6px 12px;
+  letter-spacing: -0.025em;
+}
+
+.chess-subtitle {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--zinc-400);
+  line-height: 1.6;
+}
+
+.chess-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  line-height: 1.5;
+}
+
+.chess-text-muted {
   font-size: 0.75rem;
   font-weight: 600;
-  transition: background-color 0.15s ease;
+  color: var(--zinc-400);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Chess-style 3D Buttons */
+.chess-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  border-radius: 8px;
   cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  top: 0;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+
+.chess-btn:active {
+  transform: translateY(3px) !important;
+}
+
+/* Primary Button (Unified Theme Blue/Green) */
+.chess-btn-primary {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 4px 0 0 var(--primary-hover);
+}
+.chess-btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+.chess-btn-primary:active {
+  box-shadow: 0 1px 0 0 var(--primary-hover) !important;
+}
+
+/* Secondary / Grey Button */
+.chess-btn-secondary {
+  background-color: var(--grey-bg);
+  color: var(--foreground);
+  box-shadow: 0 4px 0 0 var(--grey-active);
+}
+.chess-btn-secondary:hover {
+  background-color: var(--grey-hover);
+}
+.chess-btn-secondary:active {
+  box-shadow: 0 1px 0 0 var(--grey-active) !important;
+}
+
+/* Black Button */
+.chess-btn-black {
+  background-color: var(--foreground);
+  color: var(--background);
+  box-shadow: 0 4px 0 0 var(--zinc-600);
+}
+.dark .chess-btn-black {
+  box-shadow: 0 4px 0 0 var(--zinc-800);
+}
+.chess-btn-black:hover {
+  opacity: 0.95;
+}
+.chess-btn-black:active {
+  box-shadow: 0 1px 0 0 transparent !important;
+}
+
+/* White Button */
+.chess-btn-white {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 1.5px solid var(--card-border);
+  box-shadow: 0 4px 0 0 var(--card-border);
+}
+.chess-btn-white:hover {
+  background-color: var(--grey-bg);
+}
+.chess-btn-white:active {
+  box-shadow: 0 1px 0 0 transparent !important;
+}
+
+/* Danger Button */
+.chess-btn-danger {
+  background-color: var(--color-fail);
+  color: #ffffff;
+  box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.25);
+}
+.chess-btn-danger:hover {
+  filter: brightness(1.05);
+}
+.chess-btn-danger:active {
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Success Button */
+.chess-btn-success {
+  background-color: var(--color-90);
+  color: #ffffff;
+  box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.25);
+}
+.chess-btn-success:hover {
+  filter: brightness(1.05);
+}
+.chess-btn-success:active {
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Text / Link Button */
+.chess-btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: transparent;
+  color: var(--zinc-500);
+  border: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color 0.15s ease, opacity 0.15s ease;
+  text-decoration: none;
+}
+.chess-btn-text:hover {
+  color: var(--foreground);
+}
+.chess-btn-text:active {
+  opacity: 0.7;
+}
+
+/* Containers / Cards */
+.chess-card {
+  background-color: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-bottom-width: 4px;
+  border-radius: 8px;
+  transition: border-color 0.15s ease;
+}
+.chess-card:hover {
+  border-color: var(--zinc-300);
+}
+.dark .chess-card:hover {
+  border-color: var(--zinc-700);
+}
+
+.portal-card {
+  background-color: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-bottom-width: 4px;
+  border-radius: 8px;
+}
+
+/* Backward compatibility for Notion custom buttons mapped to Chess 3D layout */
+.btn-notion-white {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  top: 0;
+  padding: 6px 12px;
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 1.5px solid var(--card-border);
+  box-shadow: 0 3px 0 0 var(--card-border);
+  text-decoration: none;
 }
 .btn-notion-white:hover {
   background-color: var(--grey-bg);
 }
+.btn-notion-white:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0px 0 0 transparent !important;
+}
 
 .btn-notion-black {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  top: 0;
+  padding: 6px 12px;
   background-color: var(--foreground);
   color: var(--background);
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: opacity 0.15s ease;
-  cursor: pointer;
+  box-shadow: 0 3px 0 0 var(--zinc-600);
+  text-decoration: none;
+}
+.dark .btn-notion-black {
+  box-shadow: 0 3px 0 0 var(--zinc-800);
 }
 .btn-notion-black:hover {
-  opacity: 0.9;
+  opacity: 0.95;
+}
+.btn-notion-black:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0px 0 0 transparent !important;
 }
 
 .btn-notion-grey {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  top: 0;
+  padding: 6px 12px;
   background-color: var(--grey-bg);
   color: var(--foreground);
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: background-color 0.15s ease;
-  cursor: pointer;
+  box-shadow: 0 3px 0 0 var(--grey-active);
+  text-decoration: none;
 }
 .btn-notion-grey:hover {
   background-color: var(--grey-hover);
 }
+.btn-notion-grey:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0px 0 0 transparent !important;
+}
 
 .btn-notion-blue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  top: 0;
+  padding: 6px 12px;
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: background-color 0.15s ease;
-  cursor: pointer;
+  box-shadow: 0 3px 0 0 var(--primary-hover);
+  text-decoration: none;
 }
 .btn-notion-blue:hover {
   background-color: var(--primary-hover);
+}
+.btn-notion-blue:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0px 0 0 transparent !important;
+}
+
+/* Global button styles for specific widgets */
+.btn-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  top: 0;
+  padding: 0.45rem 1.25rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  box-shadow: 0 3px 0 0 var(--primary-hover);
+  text-decoration: none;
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+.btn-primary:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0px 0 0 transparent !important;
+}
+
+.btn-secondary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  top: 0;
+  padding: 0.45rem 1.25rem;
+  background-color: var(--grey-bg);
+  color: var(--foreground);
+  border: none;
+  box-shadow: 0 3px 0 0 var(--grey-active);
+  text-decoration: none;
+}
+.btn-secondary:hover {
+  background-color: var(--grey-hover);
+}
+.btn-secondary:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0px 0 0 transparent !important;
 }
 
 /* Remove rubberband bounce effect on main page and scrollable containers */
@@ -259,5 +563,14 @@ html, body, .overflow-y-auto, .overflow-auto, [class*="overflow-"] {
     position: fixed;
     width: 100%;
     height: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .h-\[calc\(100vh-4rem\)\] {
+    height: 100vh !important;
+  }
+  .min-h-\[calc\(100vh-4rem\)\] {
+    min-height: 100vh !important;
   }
 }

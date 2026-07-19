@@ -3,15 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { CheckCircle2, LogOut, ToggleLeft, ToggleRight, Sun, Moon } from 'lucide-react';
-import { ensureUserProfile, DEFAULT_AVATARS, UserProfile } from '@/utils/supabase/profile-helper';
+import { CheckCircle2, LogOut, ToggleLeft, ToggleRight, Sun, Moon, Crown, Lock, Check, FileText, BarChart3, Video } from 'lucide-react';
+import { ensureUserProfile, DEFAULT_AVATARS, UserProfile, SubscriptionStatus } from '@/utils/supabase/profile-helper';
 import { useOverlay } from '@/context/OverlayContext';
 import Avatar from '@/components/Avatar';
 
 const SECTIONS = [
-  { id: 'profile',    label: 'Profile' },
-  { id: 'security',  label: 'Security' },
-  { id: 'appearance',label: 'Appearance' },
+  { id: 'profile',      label: 'Profile' },
+  { id: 'subscription', label: 'Subscription' },
+  { id: 'security',     label: 'Security' },
+  { id: 'appearance',   label: 'Appearance' },
 ];
 
 export default function AccountPage() {
@@ -35,14 +36,13 @@ export default function AccountPage() {
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [activeSection, setActiveSection] = useState('profile');
 
   // ── Load theme ──
   useEffect(() => {
     const saved = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(saved === 'dark' || (!saved && prefersDark) ? 'dark' : 'light');
+    setTheme(saved === 'light' ? 'light' : 'dark');
   }, []);
 
   const applyTheme = (t: 'light' | 'dark') => {
@@ -84,7 +84,7 @@ export default function AccountPage() {
     setProfileError(null); setProfileMessage(null); setIsSavingProfile(true);
     if (usernameInput.length < 3) { setProfileError('Username must be at least 3 characters.'); setIsSavingProfile(false); return; }
     const cleanUsername = usernameInput.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
-    const updated: UserProfile = { id: profile!.id, username: cleanUsername, bio: bioInput, avatar_url: avatarInput };
+    const updated: UserProfile = { id: profile!.id, username: cleanUsername, bio: bioInput, avatar_url: avatarInput, subscription_status: profile!.subscription_status || 'free' };
     if (isFallback) {
       const { saveLocalProfileFallback } = await import('@/utils/supabase/profile-helper');
       saveLocalProfileFallback(updated);
@@ -303,6 +303,96 @@ export default function AccountPage() {
                     : <ToggleLeft  size={32} className="text-zinc-300 dark:text-zinc-600"/>}
                 </button>
               </div>
+            </section>
+          )}
+
+          {/* ── SUBSCRIPTION ── */}
+          {activeSection === 'subscription' && (
+            <section className="space-y-6">
+              <div>
+                <h1 className="text-base font-bold">Subscription</h1>
+                <p className="text-xs text-zinc-400 mt-0.5">Your current plan and available features.</p>
+              </div>
+
+              {/* Current Plan Badge */}
+              <div className={`p-5 rounded-xl border-2 ${
+                (profile?.subscription_status === 'premium' || profile?.subscription_status === 'tutor_student')
+                  ? 'border-amber-400/50 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 dark:border-amber-500/30'
+                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900'
+              }`}>
+                <div className="flex items-center gap-3 mb-2">
+                  {(profile?.subscription_status === 'premium' || profile?.subscription_status === 'tutor_student') ? (
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                      <Crown size={18} className="text-white" />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
+                      <Crown size={18} className="text-zinc-400" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-bold">
+                      {profile?.subscription_status === 'premium' && 'Premium Plan'}
+                      {profile?.subscription_status === 'tutor_student' && "Tutor's Student"}
+                      {(!profile?.subscription_status || profile?.subscription_status === 'free') && 'Free Plan'}
+                    </p>
+                    <p className="text-[10px] text-zinc-400">
+                      {profile?.subscription_status === 'premium' && 'Full access to all features'}
+                      {profile?.subscription_status === 'tutor_student' && 'Full access as a Precision Education student'}
+                      {(!profile?.subscription_status || profile?.subscription_status === 'free') && 'Access to past papers only'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature Comparison */}
+              <div className="space-y-1">
+                <p className={lbl}>Feature access</p>
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                  {[
+                    { feature: 'Past Papers', icon: <FileText size={13} />, free: true, premium: true },
+                    { feature: 'Study Notes', icon: <FileText size={13} />, free: false, premium: true },
+                    { feature: 'Video Lessons', icon: <Video size={13} />, free: false, premium: true },
+                    { feature: 'Score Analytics', icon: <BarChart3 size={13} />, free: false, premium: true },
+                    { feature: 'AI Chat Support', icon: <FileText size={13} />, free: false, premium: true },
+                  ].map((item, i) => {
+                    const userHasAccess = item.free || profile?.subscription_status === 'premium' || profile?.subscription_status === 'tutor_student';
+                    return (
+                      <div key={i} className={`flex items-center justify-between px-4 py-3 text-xs ${
+                        i > 0 ? 'border-t border-zinc-100 dark:border-zinc-800' : ''
+                      }`}>
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-zinc-400">{item.icon}</span>
+                          <span className="font-medium">{item.feature}</span>
+                        </div>
+                        {userHasAccess ? (
+                          <Check size={14} className="text-green-500" />
+                        ) : (
+                          <Lock size={13} className="text-zinc-300 dark:text-zinc-600" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Upgrade CTA */}
+              {(!profile?.subscription_status || profile?.subscription_status === 'free') && (
+                <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200/50 dark:border-blue-800/30">
+                  <p className="text-xs font-bold text-blue-900 dark:text-blue-300 mb-1">Upgrade to Premium</p>
+                  <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed mb-3">
+                    Get full access to study notes, video lessons, score analytics, and AI chat support. Become one of our tutor&apos;s students or subscribe to premium.
+                  </p>
+                  <a
+                    href="https://hcn22.wordpress.com/contact-us/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors"
+                  >
+                    Contact Us to Upgrade
+                  </a>
+                </div>
+              )}
             </section>
           )}
 

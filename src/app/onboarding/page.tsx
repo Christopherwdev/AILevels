@@ -121,7 +121,8 @@ export default function OnboardingPage() {
       id: userId,
       username: cleanUsername,
       bio,
-      avatar_url: avatar || DEFAULT_AVATARS[0]
+      avatar_url: avatar || DEFAULT_AVATARS[0],
+      subscription_status: 'free'
     };
 
     // Update profile

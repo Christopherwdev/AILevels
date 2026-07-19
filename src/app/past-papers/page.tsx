@@ -428,7 +428,7 @@ export default function PastPapersPage() {
             <div className="fixed bottom-6 left-6 z-[80] flex items-center justify-start pointer-events-auto">
               <button
                 onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-                className="w-10 h-10 flex items-center justify-center bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all cursor-pointer hover:opacity-90 active:scale-95"
+                className="chess-btn chess-btn-black w-10 h-10 rounded-full shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all"
                 title="Open Filters"
               >
                 {mobileSidebarOpen ? <X size={20} /> : <SlidersHorizontal size={18} />}
@@ -438,7 +438,7 @@ export default function PastPapersPage() {
 
             {/* Left Sidebar Filter Section (Overlay style at bottom left) */}
             <aside 
-              className={`fixed bottom-24 left-6 w-80 max-w-[calc(100vw-3rem)] max-h-[70vh] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 z-40 shadow-2xl transition-all duration-200 flex flex-col gap-4 overflow-y-auto no-scrollbar ${
+              className={`chess-card fixed bottom-24 left-6 w-80 max-w-[calc(100vw-3rem)] max-h-[70vh] p-5 z-40 shadow-2xl transition-all duration-200 flex flex-col gap-4 overflow-y-auto no-scrollbar ${
                 mobileSidebarOpen 
                   ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' 
                   : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
@@ -508,10 +508,10 @@ export default function PastPapersPage() {
                                 <button
                                   key={u}
                                   onClick={() => handleUnitChange(u === unit ? '' : u)}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer grow text-center ${
+                                  className={`chess-btn text-[11px] px-3 py-1.5 grow text-center ${
                                       unit === u 
-                                          ? 'bg-blue-600 text-white' 
-                                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-350 hover:bg-zinc-200 dark:hover:bg-zinc-755'
+                                          ? 'chess-btn-primary' 
+                                          : 'chess-btn-secondary'
                                   }`}
                                   disabled={isKeywordSearchActive}
                                 >
@@ -547,7 +547,7 @@ export default function PastPapersPage() {
                     </div>
 
                     {/* Copyright Disclaimer Footer */}
-                    <footer className="mt-12 p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded space-y-4 text-xs max-w-4xl">
+                    <footer className="chess-card mt-12 p-6 space-y-4 text-xs max-w-4xl">
                         <div className="text-zinc-900 dark:text-zinc-100 font-extrabold">Copyright & Compliance Notice</div>
                         <div className="grid md:grid-cols-2 gap-4 text-[11px] text-zinc-500 leading-relaxed">
                             <div className="space-y-1">
@@ -594,10 +594,10 @@ const PaperCard: React.FC<PaperCardProps> = ({ paper, onAction }) => {
     const subjColor = getSubjectColor(paper.subject);
 
     return (
-        <div className={`flex items-center justify-between border rounded-xl py-2.5 px-3 transition-all duration-200 group ${
+        <div className={`chess-card flex items-center justify-between py-2.5 px-3 transition-all duration-200 group ${
             paper.isDisabled
-                ? 'bg-zinc-50/50 dark:bg-zinc-900/30 border-zinc-200/40 dark:border-zinc-800/40 opacity-40 select-none'
-                : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/60 shadow-xl shadow-zinc-900/5 hover:border-zinc-350 dark:hover:border-zinc-700'
+                ? 'opacity-40 select-none'
+                : ''
         }`}>
             <div className="flex items-center min-w-0">
                 <div className="text-[16px] text-zinc-900 dark:text-zinc-100 truncate">
@@ -614,10 +614,10 @@ const PaperCard: React.FC<PaperCardProps> = ({ paper, onAction }) => {
                     <button
                         onClick={() => !paper.isDisabled && onAction(paper, 'qp')}
                         disabled={paper.isDisabled}
-                        className={`px-3 py-1.5 text-center rounded-md text-[11px] font-bold transition-colors ${
+                        className={`chess-btn text-[10px] px-3 py-1.5 ${
                             paper.isDisabled
-                                ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-605 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'chess-btn-primary'
                         }`}
                     >
                         Question
@@ -625,10 +625,10 @@ const PaperCard: React.FC<PaperCardProps> = ({ paper, onAction }) => {
                     <button
                         onClick={() => !paper.isDisabled && onAction(paper, 'ms')}
                         disabled={paper.isDisabled}
-                        className={`px-3 py-1.5 text-center rounded-md text-[11px] font-bold transition-colors ${
+                        className={`chess-btn text-[10px] px-3 py-1.5 ${
                             paper.isDisabled
-                                ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-605 cursor-not-allowed'
-                                : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 cursor-pointer'
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'chess-btn-secondary'
                         }`}
                     >
                         Answer

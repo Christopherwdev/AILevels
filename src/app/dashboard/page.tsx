@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { disabledPapersList } from '@/utils/disabled-papers';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Crown } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Script from 'next/script';
@@ -244,6 +244,7 @@ export default function App() {
     });
 
     const [userId, setUserId] = useState<string | null>(null);
+    const [subscriptionStatus, setSubscriptionStatus] = useState<string>('free');
     const currentMode: 'IAL' | 'IGCSE' = appState.currentMode;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -334,9 +335,13 @@ export default function App() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('username')
+                .select('username, subscription_status')
                 .eq('id', user.id)
                 .maybeSingle();
+
+            if (profile?.subscription_status) {
+                setSubscriptionStatus(profile.subscription_status);
+            }
 
             if (profile?.username && /_[0-9]{4}$/.test(profile.username)) {
                 router.push('/onboarding');
@@ -982,7 +987,36 @@ export default function App() {
 
                     {/* Two-pane body */}
                     <div className="modal-body" style={{ padding: 0, maxHeight: '78vh', overflowY: 'auto' }}>
-                        {attempts === 0 ? (
+                        {subscriptionStatus === 'free' ? (
+                            <div className="flex flex-col items-center justify-center py-16 px-6 text-center max-w-md mx-auto">
+                                <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 mb-4 animate-bounce">
+                                    <Crown size={24} />
+                                </div>
+                                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-2">Unlock Score Analytics</h3>
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
+                                    Track score trends, mean averages, peak scores, grade estimations, and score projections. Become one of our tutor&apos;s students or upgrade to our premium subscription to unlock deep performance analytics.
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedMeanStats(null);
+                                            router.push('/account');
+                                        }}
+                                        className="px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 text-xs font-bold rounded-lg hover:opacity-90 transition cursor-pointer"
+                                    >
+                                        View Subscriptions
+                                    </button>
+                                    <a
+                                        href="https://hcn22.wordpress.com/contact-us/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                                    >
+                                        Contact to Upgrade
+                                    </a>
+                                </div>
+                            </div>
+                        ) : attempts === 0 ? (
                             <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-400 px-8">
                                 <p className="font-semibold text-sm text-zinc-600 dark:text-zinc-300 mb-1">No data recorded</p>
                                 <p className="text-xs max-w-xs">Enter scores for {subject} {paper} in the dashboard grid to unlock analytics.</p>
@@ -1000,7 +1034,7 @@ export default function App() {
                                             { label: 'Peak Score', value: peakScore !== null ? String(peakScore) : '—', sub: peakScore !== null && maxMark > 0 ? `${((peakScore / maxMark) * 100).toFixed(0)}%` : '' },
                                             { label: 'Grade Est.', value: gradeEstimate, sub: meanPct !== null ? `${meanPct.toFixed(0)}% mean` : '' },
                                         ].map(({ label, value, sub }) => (
-                                            <div key={label} className="p-3 rounded bg-zinc-50 dark:bg-zinc-900  text-center">
+                                            <div key={label} className="chess-card p-3 text-center">
                                                 <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">{label}</div>
                                                 <div className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 leading-none">{value}</div>
                                                 {sub && <div className="text-[10px] text-zinc-400 mt-0.5">{sub}</div>}
@@ -1093,7 +1127,7 @@ export default function App() {
                                     {/* Prediction */}
                                     <div>
                                         <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Prediction</div>
-                                        <div className="p-3 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-center space-y-1">
+                                        <div className="chess-card p-3 text-center space-y-1">
                                             <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 leading-none">{attempts > 0 ? predictedScore.toFixed(0) : '—'}</div>
                                             {maxMark > 0 && attempts > 0 && <div className="text-[10px] text-zinc-400">out of {maxMark}</div>}
                                             {attempts > 0 && (
@@ -1189,20 +1223,21 @@ export default function App() {
             <style>{`
                 .table-container {
                     max-width: 100%;
-                    height: calc(100vh - 160px);
-                    height: calc(100dvh - 160px);
+                    height: calc(100vh - 148px);
+                    height: calc(100dvh - 148px);
                     overflow: auto;
                     overscroll-behavior: none;
-                    border: 1px solid var(--card-border);
-                    border-radius: 4px;
+                    border: 2px solid var(--card-border);
+                    border-bottom-width: 4px;
+                    border-radius: 8px;
                     background-color: var(--card-bg);
                     position: relative;
                 }
                 
                 @media (min-width: 1024px) {
                     .table-container {
-                        height: calc(100vh - 165px);
-                        height: calc(100dvh - 165px);
+                        height: calc(100vh - 100px);
+                        height: calc(100dvh - 100px);
                     }
                 }
                 .table-container::-webkit-scrollbar {
@@ -1300,67 +1335,6 @@ export default function App() {
                 }
                 .score-cell.has-score {
                     color: #ffffff !important;
-                }
-                .btn-primary {
-                    background-color: var(--primary-color);
-                    color: white;
-                    padding: 0.45rem 1.25rem;
-                    border-radius: 4px;
-                    font-weight: 600;
-                    font-size: 0.75rem;
-                    transition: background-color 0.15s ease;
-                    cursor: pointer;
-                    border: none;
-                }
-                .btn-primary:hover {
-                    background-color: var(--primary-hover);
-                }
-                .btn-secondary {
-                    background-color: var(--grey-bg);
-                    color: var(--foreground);
-                    padding: 0.45rem 1.25rem;
-                    border-radius: 4px;
-                    font-weight: 600;
-                    font-size: 0.75rem;
-                    transition: background-color 0.15s ease;
-                    cursor: pointer;
-                    border: none;
-                }
-                .btn-secondary:hover {
-                    background-color: var(--grey-hover);
-                }
-                .modal-overlay {
-                    background-color: rgba(9, 9, 11, 0.4);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    backdrop-filter: blur(4px);
-                }
-                .modal-content {
-                    background-color: var(--card-bg);
-                    border: 1px solid var(--card-border);
-                    border-radius: 4px;
-                    max-width: 90vw;
-                    max-height: 85vh;
-                    display: flex;
-                    flex-direction: column;
-                }
-                .modal-header {
-                    padding: 1.25rem 1.5rem;
-                    border-bottom: 1px solid var(--card-border);
-                }
-                .modal-body {
-                    padding: 1.5rem;
-                    flex-grow: 1;
-                    overflow-y: auto;
-                }
-                .modal-footer {
-                    padding: 1rem 1.5rem;
-                    background-color: rgba(120,120,120,0.01);
-                    border-top: 1px solid var(--card-border);
-                    display: flex;
-                    justify-content: flex-end;
-                    border-radius: 0 0 4px 4px;
                 }
                 .overlay-graphs-container {
                     display: flex;

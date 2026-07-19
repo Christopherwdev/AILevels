@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getSubjectBySlug, getSubjectIcon } from '@/utils/subjects';
-import { BookOpen, Play, FileText, ExternalLink, Clock, ChevronRight } from 'lucide-react';
+import { BookOpen, Play, FileText, ExternalLink, Clock, ChevronRight, Crown, Lock } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
 
 type Tab = 'notes' | 'videos' | 'past-papers';
 
@@ -87,6 +88,25 @@ export default function LearnSubjectPage() {
   const slug = params.subject as string;
   const subject = getSubjectBySlug(slug);
   const [activeTab, setActiveTab] = useState<Tab>('notes');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('free');
+
+  useEffect(() => {
+    const supabase = createClient();
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_status')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.subscription_status) {
+        setSubscriptionStatus(profile.subscription_status);
+      }
+    }
+    loadProfile();
+  }, []);
 
   if (!subject) {
     return (
@@ -109,6 +129,8 @@ export default function LearnSubjectPage() {
     { key: 'videos', label: 'Videos', icon: <Play size={14} /> },
     { key: 'past-papers', label: 'Past Papers', icon: <FileText size={14} /> },
   ];
+
+  const showPaywall = subscriptionStatus === 'free' && (activeTab === 'notes' || activeTab === 'videos');
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-zinc-50 dark:bg-zinc-950">
@@ -161,6 +183,9 @@ export default function LearnSubjectPage() {
             >
               {tab.icon}
               {tab.label}
+              {subscriptionStatus === 'free' && (tab.key === 'notes' || tab.key === 'videos') && (
+                <Lock size={10} className="text-amber-500 fill-amber-500/10" />
+              )}
               {tab.key === 'past-papers' && <ExternalLink size={10} className="ml-0.5 opacity-50" />}
             </button>
           ))}
@@ -169,68 +194,98 @@ export default function LearnSubjectPage() {
 
       {/* Tab Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {activeTab === 'notes' && (
-          <div className="grid gap-5 md:grid-cols-2">
-            {notes.map((note, i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200/60 dark:border-zinc-800/60 hover:shadow-md transition-shadow group"
+        {showPaywall ? (
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center max-w-md mx-auto">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 mb-4 animate-bounce">
+              <Crown size={24} />
+            </div>
+            <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-2">Unlock {activeTab === 'notes' ? 'Study Notes' : 'Video Lessons'}</h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
+              Become one of our tutor&apos;s students or upgrade to our premium subscription to get unlimited access to all subjects, revision materials, and videos.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push('/subscription')}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition cursor-pointer"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1">{note.title}</h3>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{note.description}</p>
-                  </div>
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
-                    style={{ backgroundColor: subject.color + '15', color: subject.color }}
-                  >
-                    <BookOpen size={14} />
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {note.topics.map((topic, j) => (
-                    <span
-                      key={j}
-                      className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                    >
-                      {topic}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'videos' && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {videos.map((video, i) => (
+                View Subscription Plans
+              </button>
               <a
-                key={i}
-                href={video.url}
-                className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200/60 dark:border-zinc-800/60 hover:shadow-md transition-all group block"
+                href="https://hcn22.wordpress.com/contact-us/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
               >
-                {/* Video Thumbnail Placeholder */}
-                <div
-                  className="h-36 flex items-center justify-center relative"
-                  style={{ backgroundColor: subject.color + '10' }}
-                >
-                  <div className="w-12 h-12 rounded-full bg-white/90 dark:bg-zinc-900/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <Play size={20} style={{ color: subject.color }} className="ml-0.5" />
-                  </div>
-                  <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-[9px] font-bold rounded flex items-center gap-1">
-                    <Clock size={9} />
-                    {video.duration}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mb-1 line-clamp-2">{video.title}</h3>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{video.channel}</p>
-                </div>
+                Contact to Upgrade
               </a>
-            ))}
+            </div>
           </div>
+        ) : (
+          <>
+            {activeTab === 'notes' && (
+              <div className="grid gap-5 md:grid-cols-2">
+                {notes.map((note, i) => (
+                  <div
+                    key={i}
+                    className="chess-card p-5 group cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1">{note.title}</h3>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{note.description}</p>
+                      </div>
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                        style={{ backgroundColor: subject.color + '15', color: subject.color }}
+                      >
+                        <BookOpen size={14} />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {note.topics.map((topic, j) => (
+                        <span
+                          key={j}
+                          className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'videos' && (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {videos.map((video, i) => (
+                  <a
+                    key={i}
+                    href={video.url}
+                    className="chess-card overflow-hidden group block"
+                  >
+                    {/* Video Thumbnail Placeholder */}
+                    <div
+                      className="h-36 flex items-center justify-center relative"
+                      style={{ backgroundColor: subject.color + '10' }}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-white/90 dark:bg-zinc-900/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <Play size={20} style={{ color: subject.color }} className="ml-0.5" />
+                      </div>
+                      <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-[9px] font-bold rounded flex items-center gap-1">
+                        <Clock size={9} />
+                        {video.duration}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mb-1 line-clamp-2">{video.title}</h3>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{video.channel}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

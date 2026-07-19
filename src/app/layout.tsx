@@ -39,10 +39,30 @@ export default async function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const saved = localStorage.getItem('theme');
+                  if (saved === 'light' || (!saved && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.remove('dark');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {}
+              })()
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 transition-colors duration-300">
         <OverlayWrapper>
-          <Navbar userEmail={user?.email || null} />
-          <main className="flex-1 flex flex-col">{children}</main>
+          <div className="flex flex-col lg:flex-row min-h-screen w-full">
+            <Navbar userEmail={user?.email || null} />
+            <main className="flex-1 flex flex-col min-w-0">{children}</main>
+          </div>
         </OverlayWrapper>
       </body>
     </html>

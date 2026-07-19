@@ -712,7 +712,7 @@ function ViewerContent() {
 
                     <button 
                         onClick={() => window.open(currentMode === 'doPaper' ? qpPdfUrl : msPdfUrl, '_blank')}
-                        className="h-8 flex items-center gap-1 px-2.5 border border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black hover:bg-zinc-850 dark:hover:bg-zinc-200 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm"
+                        className="chess-btn chess-btn-black text-xs px-2.5 h-8"
                     >
                         <Download size={12} />
                         <span className="hidden lg:inline">Get PDF</span>
@@ -722,7 +722,7 @@ function ViewerContent() {
 
             {/* Audio Player Panel (Chinese papers only) */}
             {showAudioPlayerButton && showCompactAudioPlayer && (
-                <div className="absolute right-4 top-16 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-xl shadow-xl z-50 flex flex-col gap-3 w-72 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="chess-card absolute right-4 top-16 p-4 shadow-xl z-50 flex flex-col gap-3 w-72 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-2">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-200">
                             <Volume2 size={14} className="text-blue-500" />
@@ -769,7 +769,7 @@ function ViewerContent() {
             {/* Timer Settings Modal overlay */}
             {showTimerSettingsModal && (
                 <div className="fixed inset-0 modal-overlay flex items-center justify-center z-[100] p-4 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4 text-center shadow-2xl animate-in zoom-in-95 duration-250">
+                    <div className="modal-content w-full max-w-sm p-6 flex flex-col gap-4 text-center animate-in zoom-in-95 duration-250">
                         <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center justify-center gap-1.5">
                             <Settings size={15} />
                             Adjust Sitting Timer
@@ -819,13 +819,13 @@ function ViewerContent() {
                         <div className="flex gap-2 mt-2">
                             <button
                                 onClick={closeTimerSettings}
-                                className="flex-1 py-2 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl text-xs font-bold transition-colors cursor-pointer text-zinc-700 dark:text-zinc-300"
+                                className="chess-btn chess-btn-secondary flex-1 py-2 text-xs"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={setTimerFromInput}
-                                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                                className="chess-btn chess-btn-primary flex-1 py-2 text-xs"
                             >
                                 Apply Changes
                             </button>

@@ -1,10 +1,13 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+export type SubscriptionStatus = 'free' | 'premium' | 'tutor_student';
+
 export interface UserProfile {
   id: string;
   username: string;
   bio: string | null;
   avatar_url: string | null;
+  subscription_status: SubscriptionStatus;
   created_at?: string;
   updated_at?: string;
 }
@@ -64,7 +67,8 @@ export function getLocalProfileFallback(userId: string, email: string | null): U
     id: userId,
     username: `${baseUsername}_demo`,
     bio: 'Profiles table not yet configured in Supabase. Check implementation plan to run the SQL migration!',
-    avatar_url: DEFAULT_AVATARS[0]
+    avatar_url: DEFAULT_AVATARS[0],
+    subscription_status: 'free'
   };
 
   return defaultProfile;
@@ -119,7 +123,8 @@ export async function ensureUserProfile(
       id: userId,
       username,
       bio: 'A-Levels student using Precision Edu to track exam performance.',
-      avatar_url: DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)]
+      avatar_url: DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)],
+      subscription_status: 'free'
     };
 
     const { data: newProfile, error: insertError } = await supabase
