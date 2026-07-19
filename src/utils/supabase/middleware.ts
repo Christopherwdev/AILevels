@@ -34,9 +34,10 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // 1. If not signed in and page is not /auth, redirect directly to /auth
+  // 1. If not signed in and page is not /auth or root /, redirect directly to /auth
   const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.');
-  if (!user && pathname !== '/auth' && !isStatic) {
+  const isPublic = pathname === '/' || pathname === '/auth';
+  if (!user && !isPublic && !isStatic) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth';
     return NextResponse.redirect(url);
