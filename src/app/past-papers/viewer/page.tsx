@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { 
   ArrowLeft, Printer, Download, Play, Pause, RotateCcw, Settings, 
   Columns, Maximize2, BookOpen, Edit3, Volume2, 
-  CheckCircle, Menu, X 
+  CheckCircle, Menu, X, FileText
 } from 'lucide-react';
+import { disabledPapersList } from '@/utils/disabled-papers';
 
 interface PaperData {
     subject: string;
@@ -193,7 +194,10 @@ function ViewerContent() {
     // New state for mobile options popup
     const [showMobileOptions, setShowMobileOptions] = useState<boolean>(false);
     const [isMobile, setIsMobile] = useState<boolean>(false);
+    const [isPaperUnavailable, setIsPaperUnavailable] = useState<boolean>(false);
     const [isIOS, setIsIOS] = useState<boolean>(false);
+    const [qpFailed, setQpFailed] = useState<boolean>(false);
+    const [msFailed, setMsFailed] = useState<boolean>(false);
 
     // Helper Functions
     const getUrlParams = useCallback((): PaperData => {
@@ -373,9 +377,42 @@ function ViewerContent() {
             return;
         }
 
+        // Check if paper is disabled/unavailable
+        const isDisabled = disabledPapersList.some(disabledEntry => {
+            const matchBoard = disabledEntry.examBoard === null || disabledEntry.examBoard === params.examBoard;
+            const matchLevel = disabledEntry.examLevel === null || disabledEntry.examLevel === params.examLevel;
+            const matchSubject = disabledEntry.subject === null || disabledEntry.subject === params.subject;
+            const matchPaper = disabledEntry.paper === null || disabledEntry.paper === params.paper;
+            const matchSeries = disabledEntry.series === null || disabledEntry.series === params.series;
+            const matchYear = disabledEntry.year === null || disabledEntry.year === parseInt(params.year, 10);
+            return matchBoard && matchLevel && matchSubject && matchPaper && matchSeries && matchYear;
+        });
+
+        if (isDisabled) {
+            setIsPaperUnavailable(true);
+            return;
+        }
+
         setPaperTitle(`${params.subject} ${params.paper} (${params.series} ${params.year})`);
-        setQpPdfUrl(getPdfUrl('qp', params));
-        setMsPdfUrl(getPdfUrl('ms', params));
+        const qpUrl = getPdfUrl('qp', params);
+        const msUrl = getPdfUrl('ms', params);
+        setQpPdfUrl(qpUrl);
+        setMsPdfUrl(msUrl);
+
+        // Async check URL existence to avoid raw AWS/Supabase 404 errors inside iframe
+        const checkUrl = async (url: string, setFailed: (val: boolean) => void) => {
+            if (!url) return;
+            try {
+                const res = await fetch(url, { method: 'HEAD' });
+                if (!res.ok) {
+                    setFailed(true);
+                }
+            } catch (err) {
+                // If fetch fails (CORS block), do a quick GET check with ignore-cors or trust the URL
+            }
+        };
+        checkUrl(qpUrl, setQpFailed);
+        checkUrl(msUrl, setMsFailed);
 
         const initialPdfType = params.type || 'qp';
         if (initialPdfType === 'ms') {
@@ -516,13 +553,21 @@ function ViewerContent() {
                             />
                         </div>
                     ) : (
-                        <iframe 
-                            ref={iframeRef}
-                            id="qp-iframe" 
-                            className="pdf-frame w-full h-full" 
-                            src={getIframeSrc(qpPdfUrl)}
-                            title="Question Paper"
-                        ></iframe>
+                         qpFailed ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-zinc-50/50 dark:bg-zinc-900/50 text-center select-none">
+                                <FileText size={24} className="text-zinc-400 mb-2" />
+                                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-200">this specific paper is not available yet</p>
+                                <p className="text-[10px] text-zinc-450 mt-1 max-w-[220px]">We are uploading missing exam papers daily. Check back soon!</p>
+                            </div>
+                        ) : (
+                            <iframe 
+                                ref={iframeRef}
+                                id="qp-iframe" 
+                                className="pdf-frame w-full h-full" 
+                                src={getIframeSrc(qpPdfUrl)}
+                                title="Question Paper"
+                            ></iframe>
+                        )
                     )}
                 </div>
 
@@ -538,17 +583,45 @@ function ViewerContent() {
                         </div>
                     )}
                     {showMsIframe && (
-                        <iframe 
-                            ref={msIframeRef}
-                            id="ms-iframe" 
-                            className="pdf-frame w-full h-full" 
-                            src={getIframeSrc(msPdfUrl)}
-                        ></iframe>
+                        msFailed ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-zinc-50/50 dark:bg-zinc-900/50 text-center select-none border-l border-zinc-200/20 dark:border-zinc-800/20">
+                                <FileText size={24} className="text-zinc-400 mb-2" />
+                                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-200">this specific marking scheme is not available yet</p>
+                                <p className="text-[10px] text-zinc-450 mt-1 max-w-[220px]">Marking schemes are usually uploaded alongside question papers.</p>
+                            </div>
+                        ) : (
+                            <iframe 
+                                ref={msIframeRef}
+                                id="ms-iframe" 
+                                className="pdf-frame w-full h-full" 
+                                src={getIframeSrc(msPdfUrl)}
+                            ></iframe>
+                        )
                     )}
                 </div>
             </div>
         );
     };
+
+    if (isPaperUnavailable) {
+        return (
+            <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 text-center select-none font-sans">
+                <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 mb-6 animate-pulse">
+                    <BookOpen size={32} />
+                </div>
+                <h1 className="text-xl font-black text-zinc-900 dark:text-zinc-100 mb-2">Past Paper Not Available</h1>
+                <p className="text-xs text-zinc-450 max-w-sm leading-relaxed mb-6">
+                    The requested exam past paper or marking scheme is currently not uploaded or is restricted. Please try selecting a different series or year.
+                </p>
+                <button
+                    onClick={() => window.close()}
+                    className="px-5 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-xl text-xs font-bold transition hover:opacity-90 shadow-sm cursor-pointer"
+                >
+                    Close Viewer Window
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="antialiased h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 select-none">

@@ -14,7 +14,6 @@ import {
   GraduationCap, 
   MessageCircle, 
   FileText, 
-  Bot, 
   Settings, 
   LogOut, 
   User, 
@@ -22,8 +21,9 @@ import {
   ChevronDown, 
   Menu, 
   X,
-  ChevronRight,
-  BookOpen
+  Lock,
+  Mail,
+  Key
 } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 
@@ -36,6 +36,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const router = useRouter();
   const supabase = createClient();
 
+  if (!userEmail) return null;
 
   const [username, setUsername] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -46,8 +47,16 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const [isLevelMenuOpen, setIsLevelMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
+  // Auth Quick Dropdown state
+  const [showAuthDropdown, setShowAuthDropdown] = useState(false);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authProcessing, setAuthProcessing] = useState(false);
+
   const levelMenuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const authDropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync mode with localStorage
   useEffect(() => {
@@ -65,7 +74,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
     router.refresh();
   };
 
-  // Close menus
+  // Close menus on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (levelMenuRef.current && !levelMenuRef.current.contains(e.target as Node)) {
@@ -74,7 +83,14 @@ export default function Navbar({ userEmail }: NavbarProps) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setIsUserMenuOpen(false);
       }
+      if (authDropdownRef.current && !authDropdownRef.current.contains(e.target as Node)) {
+        setIsAuthDropdown(false);
+      }
     }
+    const setIsAuthDropdown = (val: boolean) => {
+      // Helper function matching target scope
+      if (!val) setShowAuthDropdown(false);
+    };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -131,6 +147,43 @@ export default function Navbar({ userEmail }: NavbarProps) {
     }`;
   };
 
+  // Intercept protected paths for unauthenticated users
+  const handleLinkClick = (e: React.MouseEvent, path: string, onItemClick?: () => void) => {
+    const isProtected = ['/dashboard', '/calendar', '/notes', '/subscription', '/tutors/my', '/chat', '/account'].some(
+      p => path === p || path.startsWith(p + '?') || path.startsWith(p + '/')
+    );
+
+    if (isProtected && !userEmail) {
+      e.preventDefault();
+      setShowAuthDropdown(true);
+      if (onItemClick) onItemClick(); // Close mobile drawer if open
+    } else {
+      if (onItemClick) onItemClick();
+    }
+  };
+
+  // Inline sign in form handler
+  const handleQuickLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthProcessing(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: authEmail.trim(),
+      password: authPassword
+    });
+
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      setShowAuthDropdown(false);
+      setAuthEmail('');
+      setAuthPassword('');
+      router.refresh();
+    }
+    setAuthProcessing(false);
+  };
+
   const renderSubjectSection = (onItemClick?: () => void) => {
     const modeSubjects = subjects.filter((s) => s.level === currentMode);
     return (
@@ -142,7 +195,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
             <Link
               key={s.slug}
               href={`/learn/${s.slug}`}
-              onClick={onItemClick}
+              onClick={(e) => handleLinkClick(e, `/learn/${s.slug}`, onItemClick)}
               className={`flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
                 active
                   ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-bold'
@@ -167,24 +220,46 @@ export default function Navbar({ userEmail }: NavbarProps) {
       <div className="space-y-4 text-left">
         {/* Section 1: General */}
         <div className="space-y-1">
-          <p className="px-2.5 text-[8px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-550">General</p>
-          <Link href="/" onClick={onItemClick} className={getNavLinkClass('/')}>
+          <p className="px-2.5 text-[8px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-555">General</p>
+          {/* Home link removed for signed in users - dashboard is landing page
+          <Link 
+            href="/" 
+            onClick={(e) => handleLinkClick(e, '/', onItemClick)} 
+            className={getNavLinkClass('/')}
+          >
             <Home size={13} />
             <span>Home</span>
           </Link>
-          <Link href="/dashboard" onClick={onItemClick} className={getNavLinkClass('/dashboard')}>
+          */}
+          <Link 
+            href="/dashboard" 
+            onClick={(e) => handleLinkClick(e, '/dashboard', onItemClick)} 
+            className={getNavLinkClass('/dashboard')}
+          >
             <Layout size={13} />
             <span>Dashboard</span>
           </Link>
-          <Link href="/calendar" onClick={onItemClick} className={getNavLinkClass('/calendar')}>
+          <Link 
+            href="/calendar" 
+            onClick={(e) => handleLinkClick(e, '/calendar', onItemClick)} 
+            className={getNavLinkClass('/calendar')}
+          >
             <Calendar size={13} />
             <span>Calendar</span>
           </Link>
-          <Link href="/notes" onClick={onItemClick} className={getNavLinkClass('/notes')}>
+          <Link 
+            href="/notes" 
+            onClick={(e) => handleLinkClick(e, '/notes', onItemClick)} 
+            className={getNavLinkClass('/notes')}
+          >
             <FileText size={13} />
             <span>Notes</span>
           </Link>
-          <Link href="/subscription" onClick={onItemClick} className={getNavLinkClass('/subscription')}>
+          <Link 
+            href="/subscription" 
+            onClick={(e) => handleLinkClick(e, '/subscription', onItemClick)} 
+            className={getNavLinkClass('/subscription')}
+          >
             <Crown size={13} />
             <span>Subscription</span>
           </Link>
@@ -193,15 +268,27 @@ export default function Navbar({ userEmail }: NavbarProps) {
         {/* Section 2: Tutors */}
         <div className="space-y-1">
           <p className="px-2.5 text-[8px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-550">Tutors</p>
-          <Link href="/tutors" onClick={onItemClick} className={getNavLinkClass('/tutors')}>
+          <Link 
+            href="/tutors" 
+            onClick={(e) => handleLinkClick(e, '/tutors', onItemClick)} 
+            className={getNavLinkClass('/tutors')}
+          >
             <GraduationCap size={13} />
             <span>All Tutors</span>
           </Link>
-          <Link href="/tutors/my" onClick={onItemClick} className={getNavLinkClass('/tutors/my')}>
+          <Link 
+            href="/tutors/my" 
+            onClick={(e) => handleLinkClick(e, '/tutors/my', onItemClick)} 
+            className={getNavLinkClass('/tutors/my')}
+          >
             <Settings size={13} />
             <span>My Tutors</span>
           </Link>
-          <Link href="/chat" onClick={onItemClick} className={getNavLinkClass('/chat')}>
+          <Link 
+            href="/chat" 
+            onClick={(e) => handleLinkClick(e, '/chat', onItemClick)} 
+            className={getNavLinkClass('/chat')}
+          >
             <MessageCircle size={13} />
             <span>Chat</span>
           </Link>
@@ -211,22 +298,18 @@ export default function Navbar({ userEmail }: NavbarProps) {
         <div className="space-y-1">
           <p className="px-2.5 text-[8px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-550">Resources</p>
           
-         
-
-          <Link href="/past-papers" onClick={onItemClick} className={getNavLinkClass('/past-papers')}>
-            <FileText size={13} />
-            <span>Past Papers</span>
-          </Link>
-          {/* AI Teacher link hidden for now
-          <Link href="/ai-teacher" onClick={onItemClick} className={getNavLinkClass('/ai-teacher')}>
-            <Bot size={13} />
-            <span>AI Teacher</span>
-          </Link>
-          */}
-           {/* Dynamic Subjects */}
           <div className="pl-1 border-l border-zinc-100 dark:border-zinc-800 space-y-0.5 my-1">
             {renderSubjectSection(onItemClick)}
           </div>
+
+          <Link 
+            href="/past-papers" 
+            onClick={(e) => handleLinkClick(e, '/past-papers', onItemClick)} 
+            className={getNavLinkClass('/past-papers')}
+          >
+            <FileText size={13} />
+            <span>Past Papers</span>
+          </Link>
         </div>
       </div>
     );
@@ -245,7 +328,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-extrabold text-zinc-900 dark:text-zinc-100 leading-none">
-                Precision {currentMode}
+                {currentMode}
               </p>
               <p className="text-[7px] text-zinc-400 font-bold mt-0.5 tracking-wider">A-LEVELS</p>
             </div>
@@ -290,12 +373,12 @@ export default function Navbar({ userEmail }: NavbarProps) {
   const renderUserProfileBlock = () => {
     if (!userEmail) {
       return (
-        <Link
-          href="/auth"
-          className="w-full py-2 flex items-center justify-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-lg text-[10px] font-bold uppercase tracking-wider transition hover:opacity-90"
+        <button
+          onClick={() => setShowAuthDropdown(!showAuthDropdown)}
+          className="w-full py-2 flex items-center justify-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-lg text-[10px] font-bold uppercase tracking-wider transition hover:opacity-90 cursor-pointer"
         >
           Sign In
-        </Link>
+        </button>
       );
     }
 
@@ -311,12 +394,12 @@ export default function Navbar({ userEmail }: NavbarProps) {
               <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-none">
                 {username || 'Student'}
               </p>
-              <p className="text-[8px] text-zinc-450 truncate mt-0.5 max-w-[100px]">{userEmail}</p>
+              <p className="text-[8px] text-zinc-455 truncate mt-0.5 max-w-[100px]">{userEmail}</p>
             </div>
           </Link>
           <button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="p-1 text-zinc-450 hover:text-zinc-800 dark:hover:text-zinc-200 rounded-md hover:bg-zinc-55 dark:hover:bg-zinc-900 transition cursor-pointer"
+            className="p-1 text-zinc-455 hover:text-zinc-800 dark:hover:text-zinc-200 rounded-md hover:bg-zinc-55 dark:hover:bg-zinc-900 transition cursor-pointer"
           >
             <Settings size={13} />
           </button>
@@ -356,7 +439,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
   return (
     <>
       {/* Desktop Compact Left Sidebar */}
-      <aside className="hidden lg:flex flex-col w-52 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 shrink-0 h-screen sticky top-0 justify-between">
+      <aside className="hidden lg:flex flex-col w-52 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 p-3 shrink-0 h-screen sticky top-0 justify-between relative">
         <div className="flex flex-col gap-4 overflow-y-auto no-scrollbar pr-0.5">
           {/* Brand Logo & Name */}
           <div className="flex items-center gap-2 px-1 py-2 select-none border-b border-zinc-100 dark:border-zinc-900 pb-3 mb-1 shrink-0">
@@ -369,6 +452,73 @@ export default function Navbar({ userEmail }: NavbarProps) {
         <div className="pt-3 border-t border-zinc-150 dark:border-zinc-805">
           {renderUserProfileBlock()}
         </div>
+
+        {/* Dynamic Auth Inline Dropdown Card (Desktop) */}
+        {showAuthDropdown && !userEmail && (
+          <div 
+            ref={authDropdownRef}
+            className="absolute left-56 bottom-4 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-2xl z-50 animate-in fade-in slide-in-from-left-4 duration-200 text-left space-y-4"
+          >
+            <div className="flex justify-between items-center">
+              <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                <Lock size={12} className="text-amber-500" />
+                Sign In to Continue
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowAuthDropdown(false);
+                  setAuthError(null);
+                }}
+                className="text-zinc-400 hover:text-zinc-650 bg-transparent border-none cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <p className="text-[10px] text-zinc-450 leading-normal">
+              You clicked a student-only workspace feature. Sign in below or use our <Link href="/auth" onClick={() => setShowAuthDropdown(false)} className="text-blue-500 font-bold hover:underline">auth page</Link>.
+            </p>
+
+            {authError && (
+              <p className="p-2 text-[9px] bg-red-50 dark:bg-red-955/20 text-red-650 rounded">
+                {authError}
+              </p>
+            )}
+
+            <form onSubmit={handleQuickLogin} className="space-y-3">
+              <div className="relative">
+                <Mail className="absolute left-2.5 top-2.5 text-zinc-400 w-3.5 h-3.5" />
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  value={authEmail}
+                  onChange={e => setAuthEmail(e.target.value)}
+                  required
+                  className="w-full pl-8 pr-3 py-2 text-[10px] bg-zinc-50 dark:bg-zinc-800 rounded-lg outline-none border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+              <div className="relative">
+                <Key className="absolute left-2.5 top-2.5 text-zinc-400 w-3.5 h-3.5" />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={authPassword}
+                  onChange={e => setAuthPassword(e.target.value)}
+                  required
+                  className="w-full pl-8 pr-3 py-2 text-[10px] bg-zinc-50 dark:bg-zinc-800 rounded-lg outline-none border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={authProcessing}
+                className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition disabled:opacity-40 cursor-pointer"
+              >
+                {authProcessing ? 'Signing In...' : 'Quick Sign In'}
+              </button>
+            </form>
+          </div>
+        )}
       </aside>
 
       {/* Mobile Top Header */}
@@ -386,7 +536,12 @@ export default function Navbar({ userEmail }: NavbarProps) {
         {userEmail ? (
           <Avatar avatarUrl={avatarUrl} username={username} sizeClass="h-6.5 w-6.5" textSizeClass="text-[9px] font-bold" />
         ) : (
-          <Link href="/auth" className="text-[9px] font-extrabold bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black px-2.5 py-1 rounded">IN</Link>
+          <button 
+            onClick={() => setShowAuthDropdown(!showAuthDropdown)}
+            className="text-[9px] font-extrabold bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black px-2.5 py-1 rounded cursor-pointer"
+          >
+            IN
+          </button>
         )}
       </header>
 
@@ -402,6 +557,72 @@ export default function Navbar({ userEmail }: NavbarProps) {
             <div className="pt-3 border-t border-zinc-150 dark:border-zinc-800">
               {renderUserProfileBlock()}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Center Popover Auth Dropdown */}
+      {showAuthDropdown && !userEmail && (
+        <div className="lg:hidden fixed inset-0 z-[999999] bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                <Lock size={14} className="text-amber-500" />
+                Sign In Required
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowAuthDropdown(false);
+                  setAuthError(null);
+                }}
+                className="text-zinc-400 hover:text-zinc-650 bg-transparent border-none cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-450 leading-normal">
+              You clicked a restricted student dashboard feature. Log in below to access.
+            </p>
+
+            {authError && (
+              <p className="p-2 text-xs bg-red-50 dark:bg-red-955/20 text-red-650 rounded">
+                {authError}
+              </p>
+            )}
+
+            <form onSubmit={handleQuickLogin} className="space-y-3">
+              <div className="relative">
+                <Mail className="absolute left-2.5 top-2.5 text-zinc-400 w-3.5 h-3.5" />
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  value={authEmail}
+                  onChange={e => setAuthEmail(e.target.value)}
+                  required
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-zinc-50 dark:bg-zinc-800 rounded-lg outline-none border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+              <div className="relative">
+                <Key className="absolute left-2.5 top-2.5 text-zinc-400 w-3.5 h-3.5" />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={authPassword}
+                  onChange={e => setAuthPassword(e.target.value)}
+                  required
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-zinc-50 dark:bg-zinc-800 rounded-lg outline-none border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={authProcessing}
+                className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition disabled:opacity-40 cursor-pointer"
+              >
+                {authProcessing ? 'Signing In...' : 'Quick Sign In'}
+              </button>
+            </form>
           </div>
         </div>
       )}

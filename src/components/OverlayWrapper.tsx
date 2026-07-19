@@ -64,8 +64,9 @@ export default function OverlayWrapper({ children }: { children: React.ReactNode
       const path = window.location.pathname;
       const isPastPapersPage = path.startsWith('/past-papers');
       const isHomePage = path === '/';
+      const isAuthPage = path.startsWith('/auth');
 
-      if (isHomePage) return;
+      if (isHomePage || isAuthPage) return;
 
       if (isPastPapersPage) {
         // Only trigger auth popup if writing answers in the textarea

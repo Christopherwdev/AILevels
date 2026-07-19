@@ -251,7 +251,7 @@ export default function CalendarPage() {
         </aside>
       )}
 
-      <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col min-h-0 relative">
+      <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col min-h-0 relative px-6 md:px-12">
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-xs uppercase text-zinc-400 font-bold tracking-widest">
             Loading…
@@ -262,7 +262,7 @@ export default function CalendarPage() {
             <div
               ref={containerRef}
               id="calendar-months-container"
-              className="flex-1 overflow-y-auto w-full pb-24 sm:pb-6 px-4 sm:px-0"
+              className="flex-1 overflow-y-auto w-full pb-24 sm:pb-6"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
             >
               {/* Top sentinel — triggers prepend */}

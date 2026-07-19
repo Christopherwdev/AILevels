@@ -498,13 +498,13 @@ export default function App() {
                     top = cellRect.top - bottomActionsRect.height - 30;
                     left = viewportWidth - bottomActionsRect.width - 30;
                 } else {
-                    top = viewportHeight - bottomActionsRect.height - 30;
+                    top = viewportHeight - bottomActionsRect.height - 90;
                     left = viewportWidth - bottomActionsRect.width - 30;
                 }
             }
 
             left = Math.max(30, Math.min(viewportWidth - bottomActionsRect.width - 30, left));
-            top = Math.max(30, Math.min(viewportHeight - bottomActionsRect.height - 30, top));
+            top = Math.max(30, Math.min(viewportHeight - bottomActionsRect.height - 90, top));
 
             bottomActions.style.left = `${left}px`;
             bottomActions.style.top = `${top}px`;
